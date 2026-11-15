@@ -60,13 +60,14 @@ export function legalOffers(state) {
   };
 }
 
-function finish(state, current, history) {
+/** `auto` is true when the auction closed by automatic acceptance (opponent could not counter), false for accept(). */
+function finish(state, current, history, auto) {
   return {
     ...state,
     current,
     history,
     status: 'done',
-    result: { owner: current.to, payer: current.by, paid: current.amount },
+    result: { owner: current.to, payer: current.by, paid: current.amount, auto },
   };
 }
 
@@ -92,7 +93,7 @@ export function offer(state, { to, amount } = {}) {
 
   // Automatic acceptance: the opponent cannot afford a counter-offer.
   const l = legalOffers(advanced);
-  if (!l.take && !l.give) return finish(advanced, current, history);
+  if (!l.take && !l.give) return finish(advanced, current, history, true);
   return advanced;
 }
 
@@ -102,5 +103,5 @@ export function accept(state) {
   if (state.status === 'awaiting-open') {
     throw new AuctionError('NOT_ALLOWED', 'The opener must make an offer first');
   }
-  return finish(state, state.current, state.history);
+  return finish(state, state.current, state.history, false);
 }

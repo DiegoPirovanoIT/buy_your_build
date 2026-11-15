@@ -91,8 +91,9 @@
       onOffer: (o) => say(`Offri ${JSON.stringify(o)}`),
       onAccept: () => say('Accetta'),
     });
-    const counterBoth = createOfferSlider({
-      player: marco, other: giulia, take: { min: 6, max: 12 }, give: { min: 6, max: 12 }, value: 6, canAccept: true,
+    // After an opening the engine allows at most one of the two directions (the counter must flip the result).
+    const counterGive = createOfferSlider({
+      player: marco, other: giulia, take: null, give: { min: 6, max: 12 }, value: -6, canAccept: true,
     });
     const broke = createOfferSlider({
       player: giulia, other: marco, take: { min: 0, max: 0 }, give: null, value: 0,
@@ -102,7 +103,7 @@
     });
     section('Cursore offerta: apertura (da -12 a +12)', opening);
     section('Cursore: controfferta, solo "lo prendo" (min 4, max 7)', counter);
-    section('Cursore: controfferta, entrambi i lati (min 6)', counterBoth);
+    section('Cursore: controfferta, solo "lo do all\'altro" (min 6, max 12)', counterGive);
     section('Cursore: giocatore con 0 euro in apertura', broke);
     section('Cursore: nessuna offerta possibile (solo Accetta)', brokeCounter);
 
@@ -124,7 +125,7 @@
         el('p', { class: 'auction__status' }, 'Bunker · Oggetto 4/10'),
         createItemCard(items[0]),
         el('p', { class: 'auction__status' }, 'Offerta: MARCO lo prende per 5 €'),
-        createOfferSlider({ player: giulia, other: marco, take: { min: 6, max: 7 }, give: { min: 6, max: 7 }, value: 6, canAccept: true }),
+        createOfferSlider({ player: giulia, other: marco, take: { min: 6, max: 7 }, give: null, value: 6, canAccept: true }),
       ],
       panels: [
         createPlayerPanel({ ...marco, money: 12, items: items.slice(0, 2) }),

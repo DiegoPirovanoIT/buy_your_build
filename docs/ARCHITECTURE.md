@@ -35,7 +35,8 @@ js/
     game.js
     rng.js
   ui/
-    components.js          # itemCard(), thumb(), modal(), offerSlider(), playerPanel()
+    components.js          # el(), createButton(), createItemImage(), createItemCard(), createThumb(), createPlayerPanel(),
+                           # describeOffer(), createOfferSlider(), createModal(), createScoreBadge(), createScoreRow(), createAuctionLayout()
     home.js  settings.js  intro.js  auction.js  judge.js  roundResult.js  final.js
   fx/
     transitions.js  confetti.js  countUp.js  animations.js
@@ -51,7 +52,7 @@ tools/
   validate-scenarios.mjs
   serve.mjs                # server statico locale (porta 8080)
 tests/
-  auction.test.mjs  scoring.test.mjs  game.test.mjs  scenarios.test.mjs  settings.test.mjs
+  auction.test.mjs  scoring.test.mjs  game.test.mjs  invariants.test.mjs  scenarios.test.mjs  settings.test.mjs
 dev/
   components.html          # vetrina dei componenti con dati finti
 .github/workflows/
@@ -94,7 +95,9 @@ AuctionState = {
   status: "awaiting-open" | "bidding" | "done",
   current: { by, to, amount } | null,
   history: [{ by, to, amount }],
-  result: { owner, payer, paid } | null   // solo quando done
+  result: { owner, payer, paid, auto } | null   // solo quando done; auto = true se l'asta si è chiusa per
+                                                // accettazione automatica (l'avversario non poteva controbattere),
+                                                // false se per `accept()`. Serve alla UI per mostrare "accettata in automatico".
 }
 ```
 Invarianti da testare:
@@ -124,46 +127,62 @@ compareBuilds(scenario, { p1: ids, p2: ids }, money: { p1, p2 }) → {
 ```js
 createGame({ settings, scenarioIds, rng }) → GameState
 // scenarioIds = scenari abilitati. Sceglie `settings.rounds` scenari senza ripetizioni (lancia se sono meno),
-// il primo apritore a caso e un `seed` salvato nello stato.
+// il primo apritore a caso e un `seed` salvato nello stato. Valida gli argomenti: rounds intero ≥ 1, budget intero ≥ 0,
+// judgeMode "auto" | "human", scenarioIds array.
 startRound(state, scenario) → GameState                 // scenario.id deve essere roundScenarioIds[roundIndex]
                                                         // mescola gli oggetti (rng derivato da seed + roundIndex,
                                                         // così lo stato resta serializzabile e la firma senza rng),
-                                                        // resetta il budget, apre la prima asta con nextOpener
+                                                        // resetta il budget, apre la prima asta con currentOpener
 currentAuction(state) → AuctionState | null             // asta fresca ("awaiting-open") dell'oggetto corrente
-applyAuction(state, auctionState) → GameState           // auction "done": paga l'ultimo offerente, assegna l'oggetto,
-                                                        // alterna nextOpener, apre l'asta successiva (null dopo il 10°)
+applyAuction(state, auctionState) → GameState           // auction "done" e *quella attesa*: stesso oggetto, stesso apritore e
+                                                        // stessi soldi dell'asta restituita da currentAuction (altrimenti
+                                                        // AUCTION_MISMATCH). Paga l'ultimo offerente, assegna l'oggetto,
+                                                        // alterna currentOpener, apre l'asta successiva (null dopo il 10°)
 isRoundOver(state), isGameOver(state)                   // round: tutti gli oggetti assegnati; game: results.length === rounds
-roundBreakdown(state, scenario) → compareBuilds(...)    // breakdown automatico del round corrente (calcolabile anche col giudice umano)
-autoVerdict(state, scenario) → { winner, source: "auto", breakdown }
-finishRound(state, verdict) → GameState                 // verdict: { winner: "p1"|"p2"|null, source: "auto"|"human", breakdown? }
-                                                        // il verdetto umano non può essere null; passare `breakdown`
-                                                        // (roundBreakdown) anche col giudice umano per avere i punteggi nel riepilogo
+roundBreakdown(state, scenario) → compareBuilds(...)    // breakdown automatico del round corrente; la UI lo usa anche col
+                                                        // giudice umano per il punteggio "per curiosità" dopo il verdetto
+finishRound(state, scenario, verdict?) → GameState
+// Il motore calcola SEMPRE il breakdown (come roundBreakdown). La sorgente del verdetto segue `settings.judgeMode`:
+//  - "auto":  `verdict` NON va passato (se passato: UNEXPECTED_VERDICT). Vince chi ha il punteggio più alto, poi più soldi
+//             avanzati, poi round pari (`winner: null`).
+//  - "human": `verdict = { winner: "p1" | "p2" }` obbligatorio (altrimenti INVALID_VERDICT); niente pareggio.
+// `scenario.id` deve essere quello del round (WRONG_SCENARIO). Il verdetto salvato è { winner, source, breakdown }.
 gameSummary(state) → {
   roundsWon: { p1, p2 }, totalScore: { p1, p2 },
   winner: "p1"|"p2"|null, tieBreak: "rounds"|"score"|"draw",
   rounds: [{ scenarioId, winner, source, tieBreak, scores: {p1,p2}, moneyLeft, owned, breakdown }]
 }
 // winner = più round vinti; a pari round: punteggio totale se judgeMode === "auto", altrimenti pareggio (null).
-// I round pari non contano per nessuno. Un round senza breakdown conta 0 nei punteggi.
+// I round pari non contano per nessuno.
+// Modalità umana: `totalScore` e `rounds[i].scores` sono SOLO informativi (non decidono nulla) e `rounds[i].tieBreak`
+// è `null` (ha deciso il giudice); lo spareggio automatico resta in `rounds[i].breakdown.tieBreak`.
+// Modalità auto: `rounds[i].tieBreak` = "score" | "money" | "draw".
+
+GameError extends Error { code }                        // tutti gli errori del modulo; codici: INVALID_SETTINGS, INVALID_ARGS,
+                                                        // NOT_ENOUGH_SCENARIOS, GAME_OVER, ROUND_NOT_FINISHED, WRONG_SCENARIO,
+                                                        // NO_AUCTION, AUCTION_NOT_DONE, AUCTION_MISMATCH, NEGATIVE_MONEY,
+                                                        // NO_ROUND, ROUND_NOT_OVER, ROUND_ALREADY_FINISHED,
+                                                        // UNEXPECTED_VERDICT, INVALID_VERDICT
 
 GameState = {
   settings,
   seed,                              // per derivare l'ordine degli oggetti di ogni round
   roundScenarioIds: [id],
   roundIndex,                        // round corrente; incrementato da finishRound
-  nextOpener: "p1" | "p2",           // chi aprirà la prossima asta; l'alternanza continua tra i round
+  currentOpener: "p1" | "p2",        // apritore dell'asta corrente; se non ce n'è una in corso (tra un round e l'altro,
+                                     // o a round finito) è quello della prossima asta. L'alternanza continua tra i round
   round: {
     scenarioId, itemOrder: [id], itemIndex,
     money: { p1, p2 },
     owned: { p1: [id], p2: [id] },
     log: [{ itemId, owner, payer, paid, history }],
     auction: AuctionState | null,
-    verdict: null | { winner, source, breakdown }   // il round resta in stato dopo finishRound, per la UI del risultato
+    verdict: null | { winner, source: "auto"|"human", breakdown }   // il round resta in stato dopo finishRound, per la UI del risultato
   } | null,
   results: [{ scenarioId, owned, moneyLeft, verdict, breakdown }]
 }
 ```
-Flusso UI: `startRound` → (`currentAuction` → `offer`/`accept` sulla copia locale → `applyAuction`) × 10 → `finishRound(autoVerdict(...))` oppure verdetto umano → `startRound` successivo o `gameSummary`.
+Flusso UI: `startRound` → (`currentAuction` → `offer`/`accept` sulla copia locale → `applyAuction`) × 10 → `finishRound(state, scenario)` (auto) oppure `finishRound(state, scenario, { winner })` (giudice umano; poi `roundBreakdown` per il punteggio "per curiosità") → `startRound` successivo o `gameSummary`.
 
 ## 5. Stato dell'app, router e schermate
 
@@ -190,7 +209,7 @@ on(name, handler) → unsubscribe;  emit(name, payload)
 | `judge:reveal` | `{ side, itemId }` | ui/judge |
 | `round:end` | `{ roundIndex, winner, scores? }` | ui/roundResult |
 | `game:end` | `{ winner, summary }` | ui/final |
-| `ui:click` | `{ kind }` | ui/components (pulsanti) |
+| `ui:click` | `{ kind }` | ui/components (pulsanti), **emesso da T6**: T4 non importa `events.js`, i pulsanti accettano solo una callback `onClick` |
 
 Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli in try/catch dentro `events.js`.
 
@@ -214,7 +233,7 @@ Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli i
 ## 10. Test e qualità
 
 - `npm test` → `node --test`. Coprire ogni regola di GAME_DESIGN §4 e §6 con almeno un test.
-- `npm run validate` → controlla tutti gli scenari. `-- --check-images` fa anche richieste di rete (non in CI per default).
+- `npm run validate` → controlla tutti gli scenari; stampa anche AVVISI non bloccanti (`lintScenario`, linee guida di GAME_DESIGN §5.2) senza cambiare l'exit code. `-- --check-images` fa anche richieste di rete (non in CI per default).
 - `npm run serve` → http://localhost:8080.
 - CI (`ci.yml`): validate + test su ogni push e PR. Deploy (`pages.yml`): pubblica la root del repo su Pages da `main`.
 
@@ -225,7 +244,7 @@ Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli i
 | T1 | `js/engine/auction.js`, `tests/auction.test.mjs` |
 | T2 | `js/engine/scoring.js`, `game.js`, `rng.js`, relativi test |
 | T3 | `tools/validate-scenarios.mjs`, `scenarios/*`, `tests/scenarios.test.mjs` |
-| T4 | `css/tokens.css`, `base.css`, `components.css`, `js/ui/components.js`, `dev/` |
+| T4 | `index.html`, `css/tokens.css`, `base.css`, `components.css`, `js/ui/components.js`, `dev/` |
 | T5 | `js/main.js`, `router.js`, `store.js`, `settings.js`, `scenarios.js`, `ui/home.js`, `ui/settings.js`, `tests/settings.test.mjs` |
 | T6 | `js/events.js`, `ui/intro.js`, `ui/auction.js`, `ui/judge.js`, `ui/roundResult.js`, `css/screens.css` |
 | T7 | `ui/final.js` |
