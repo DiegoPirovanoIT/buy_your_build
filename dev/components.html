@@ -1,5 +1,137 @@
 <!doctype html>
 <html lang="it">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Componenti</title></head>
-<body><!-- Placeholder: component showcase implemented by task T4. --></body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Componenti - Buy Your Build</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <style>
+    .demo h2.sec { margin: var(--sp-5) 0 var(--sp-2); padding-bottom: var(--sp-1); border-bottom: 1px solid var(--border); }
+    .demo .row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+    .demo .stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr)); gap: var(--sp-2); }
+    .swatch { padding: var(--sp-2); border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: var(--fs-sm); }
+    .demo .note { color: var(--text-dim); font-size: var(--fs-sm); }
+  </style>
+</head>
+<body>
+  <main id="app" class="demo">
+    <h1>Componenti</h1>
+    <p class="note">Vetrina con dati finti. Per vedere il fallback, il terzo oggetto ha un'immagine rotta.</p>
+    <div id="demo"></div>
+  </main>
+  <script type="module">
+    import {
+      el, createButton, createItemCard, createThumb, createItemImage, createPlayerPanel,
+      createOfferSlider, createModal, createScoreBadge, createScoreRow, createAuctionLayout,
+    } from '../js/ui/components.js';
+
+    const items = [
+      { name: 'Filtro dell\'aria NBC', emoji: '🌬️', description: 'Respira anche quando fuori non si può.', image: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 fill=%22%23488%22/%3E%3Ccircle cx=%225%22 cy=%225%22 r=%223%22 fill=%22%23fd8%22/%3E%3C/svg%3E' },
+      { name: 'Generatore diesel', emoji: '⚡', description: 'Rumoroso ma affidabile.' },
+      { name: 'Oggetto con immagine rotta', emoji: '🪤', description: 'Questa immagine non esiste: si vede l\'emoji.', image: 'https://invalid.invalid/nope.jpg' },
+      { name: 'Un nome davvero molto lungo per vedere come va a capo', emoji: '📦', description: '' },
+    ];
+    const marco = { id: 'p1', name: 'Marco' };
+    const giulia = { id: 'p2', name: 'Giulia' };
+
+    const root = document.getElementById('demo');
+    const section = (title, ...nodes) => {
+      root.append(el('h2', { class: 'sec' }, title), ...nodes);
+    };
+    const log = el('p', { class: 'note' }, 'Ultimo evento: -');
+    const say = (text) => { log.textContent = `Ultimo evento: ${text}`; };
+
+    // Token swatches
+    const tokens = ['--p1', '--p2', '--gold', '--pos', '--neg', '--accent', '--surface', '--surface-2', '--text', '--text-dim'];
+    section('Token colore', el('div', { class: 'swatches' }, tokens.map((t) =>
+      el('div', { class: 'swatch', style: `background: var(${t}); color: ${['--text', '--text-dim', '--gold', '--pos', '--p1', '--p2', '--neg', '--accent'].includes(t) ? '#111' : 'var(--text)'}` }, t))));
+
+    // Buttons
+    section('Pulsanti', el('div', { class: 'row' },
+      createButton('Primario', { onClick: () => say('primario') }),
+      createButton('Secondario', { kind: 'secondary' }),
+      createButton('Marco', { kind: 'p1' }),
+      createButton('Giulia', { kind: 'p2' }),
+      createButton('Disabilitato', { disabled: true })),
+      el('div', { class: 'stack', style: 'margin-top: var(--sp-2)' }, createButton('A tutta larghezza', { block: true })),
+      log);
+
+    // Item card
+    section('Card oggetto', el('div', { class: 'stack' }, items.map(createItemCard)));
+
+    // Thumbs and image
+    section('Miniature (tocca per il nome) e immagine con fallback',
+      el('div', { class: 'row' }, items.map(createThumb)),
+      el('div', { class: 'row', style: 'margin-top: var(--sp-2); height: 6rem' },
+        el('div', { style: 'width: 6rem; height: 6rem; overflow: hidden; border-radius: var(--radius)' }, createItemImage(items[2]))));
+
+    // Player panels
+    const turnPanel = createPlayerPanel({ ...marco, money: 12, items: items.slice(0, 3), isTurn: true });
+    const idlePanel = createPlayerPanel({ ...giulia, money: 7, items: [items[3]] });
+    const emptyPanel = createPlayerPanel({ ...giulia, name: 'Giulia (vuota)', money: 0, items: [] });
+    section('Pannelli giocatore', el('div', { class: 'auction__bottom' }, turnPanel, idlePanel),
+      el('div', { class: 'auction__bottom', style: 'margin-top: var(--sp-2)' }, emptyPanel),
+      createButton('Cambia turno', { kind: 'secondary', onClick: () => {
+        const t = turnPanel.classList.contains('is-turn');
+        turnPanel.update({ isTurn: !t }); idlePanel.update({ isTurn: t });
+      } }));
+
+    // Offer sliders
+    const opening = createOfferSlider({
+      player: marco, other: giulia, take: { min: 0, max: 12 }, give: { min: 1, max: 12 }, value: 0,
+      onChange: (v, o) => say(`apertura valore ${v}, offerta ${JSON.stringify(o)}`),
+      onOffer: (o) => say(`Offri ${JSON.stringify(o)}`),
+    });
+    const counter = createOfferSlider({
+      player: giulia, other: marco, take: { min: 4, max: 7 }, give: null, value: 4, canAccept: true,
+      onChange: (v, o) => say(`controfferta valore ${v}, offerta ${JSON.stringify(o)}`),
+      onOffer: (o) => say(`Offri ${JSON.stringify(o)}`),
+      onAccept: () => say('Accetta'),
+    });
+    const counterBoth = createOfferSlider({
+      player: marco, other: giulia, take: { min: 6, max: 12 }, give: { min: 6, max: 12 }, value: 6, canAccept: true,
+    });
+    const broke = createOfferSlider({
+      player: giulia, other: marco, take: { min: 0, max: 0 }, give: null, value: 0,
+    });
+    const brokeCounter = createOfferSlider({
+      player: giulia, other: marco, take: null, give: null, canAccept: true,
+    });
+    section('Cursore offerta: apertura (da -12 a +12)', opening);
+    section('Cursore: controfferta, solo "lo prendo" (min 4, max 7)', counter);
+    section('Cursore: controfferta, entrambi i lati (min 6)', counterBoth);
+    section('Cursore: giocatore con 0 euro in apertura', broke);
+    section('Cursore: nessuna offerta possibile (solo Accetta)', brokeCounter);
+
+    // Modal + score rows
+    const rows = el('div', {},
+      createScoreRow({ name: 'Filtro dell\'aria NBC', score: 5 }),
+      createScoreRow({ name: 'Radio a manovella', score: -2 }),
+      createScoreRow({ name: 'Neutro', score: 0 }),
+      createScoreRow({ label: 'Aria pulita', score: 4, description: 'Filtro e generatore insieme tengono l\'aria respirabile.' }, { combo: true }),
+      createScoreRow({ label: 'Troppo rumore', score: -3, description: 'Il generatore attira visitatori indesiderati.' }, { combo: true }));
+    section('Badge punteggio', el('div', { class: 'row' }, createScoreBadge(7), createScoreBadge(-4), createScoreBadge(0)));
+    section('Dettaglio punteggi', rows,
+      el('div', { style: 'margin-top: var(--sp-3)' }, createButton('Apri modale', { onClick: () =>
+        createModal({ title: 'Come sono stati calcolati i punteggi', content: rows.cloneNode(true), mount: true }) })));
+
+    // Auction layout
+    const layout = createAuctionLayout({
+      top: [
+        el('p', { class: 'auction__status' }, 'Bunker · Oggetto 4/10'),
+        createItemCard(items[0]),
+        el('p', { class: 'auction__status' }, 'Offerta: MARCO lo prende per 5 €'),
+        createOfferSlider({ player: giulia, other: marco, take: { min: 6, max: 7 }, give: { min: 6, max: 7 }, value: 6, canAccept: true }),
+      ],
+      panels: [
+        createPlayerPanel({ ...marco, money: 12, items: items.slice(0, 2) }),
+        createPlayerPanel({ ...giulia, money: 7, items: [items[3]], isTurn: true }),
+      ],
+    });
+    section('Layout schermata d\'asta', layout);
+  </script>
+</body>
 </html>

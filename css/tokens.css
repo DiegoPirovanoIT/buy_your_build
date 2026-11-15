@@ -1,1 +1,71 @@
-/* Placeholder: implemented by task T4 (see docs/ROADMAP.md). */
+/* Design tokens: every color, font and duration used by the game lives here. */
+:root {
+  /* Players */
+  --p1: #ff7a3d;
+  --p1-soft: #3a2218;
+  --p2: #3dc5ff;
+  --p2-soft: #14303d;
+  --on-p1: #1a0c04;
+  --on-p2: #04141c;
+
+  /* Semantic */
+  --gold: #ffcf4a;
+  --pos: #3ddc84;
+  --neg: #ff5a6a;
+  --accent: #b388ff; /* overridden per scenario via style="--accent: ..." */
+  --on-accent: #12081f;
+
+  /* Surfaces and text */
+  --bg: #0e0f1a;
+  --bg-glow: #1b1636;
+  --surface: #181a2b;
+  --surface-2: #232640;
+  --border: #33375a;
+  --overlay: rgba(5, 6, 14, 0.78);
+  --text: #f4f4fb;
+  --text-dim: #a9acc8;
+  --focus: #ffffff;
+
+  /* Spacing */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+
+  /* Radii and shadow */
+  --radius-sm: 0.5rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-pill: 999px;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  /* Fonts: system only, nothing is downloaded */
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.5rem;
+
+  /* Durations */
+  --dur-fast: 120ms;
+  --dur: 240ms;
+  --dur-slow: 500ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Sizes */
+  --tap: 3rem; /* minimum touch target */
+  --thumb: 3.25rem;
+  --content-w: 40rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}
