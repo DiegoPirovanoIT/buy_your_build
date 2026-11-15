@@ -8,11 +8,11 @@
 |---|---|---|---|---|
 | — | Design del gioco e documentazione | ✅ | main | GAME_DESIGN, ARCHITECTURE, ROADMAP, CLAUDE.md |
 | T0 | Scaffold, CI, Pages | ✅ | task/T0-scaffold | Struttura creata; repo GitHub e Pages ancora da attivare (vedi note) |
-| T1 | Motore d'asta | ⬜ | | dipende da T0 |
-| T2 | Punteggio + orchestrazione partita | ⬜ | | dipende da T0 |
-| T3a | Validatore degli scenari | ⬜ | | dipende da T0 |
-| T3b | 3 scenari (Bunker, Pizza, Vacanza) | ⬜ | | dipende da T3a |
-| T4 | Design system + componenti | ⬜ | | dipende da T0 |
+| T1 | Motore d'asta | ✅  | task/T1-T2-engine | unito a main |
+| T2 | Punteggio + orchestrazione partita | ✅  | task/T1-T2-engine | unito a main |
+| T3a | Validatore degli scenari | ✅  | task/T3a-validator | unito a main |
+| T3b | 3 scenari (Bunker, Pizza, Vacanza) | 🟡 | | dipende da T3a |
+| T4 | Design system + componenti | ✅  | task/T4-design-system | unito a main |
 | T5 | Router, Home, Impostazioni | ⬜ | | dipende da T1–T4 |
 | T6 | Flusso del round (intro, asta, giudice, risultato) | ⬜ | | dipende da T1–T4 |
 | T7 | Schermata finale funzionale | ⬜ | | dipende da T6 |
@@ -38,5 +38,13 @@ Scenari pubblicati: **0 / 50**
 - `ci.yml` (validate + test, Node 20) e `pages.yml` (deploy della root da main). Non ancora eseguiti: manca il remote.
 - Per chiudere "Pages attivo" servono i comandi `gh` (repo, push, `gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`), da eseguire solo su richiesta dell'utente.
 
+### 2026-11-15 — Fasi 0 e 1
+- T0 unito a main; repo pubblico su GitHub, CI attiva, sito su https://diegopirovanoit.github.io/buy_your_build/
+- T1+T2 (motore, 56 test), T3a (validatore, 53 test), T4 (design system e componenti) uniti a main.
+- Revisione della Fase 1 (code-reviewer): motore d'asta corretto (fuzz su 50.000 aste); trovate trappole nel contratto di `finishRound` e problemi minori → correzioni in corso sul branch `task/phase1-review-fixes`.
+- T3b (3 scenari) in corso.
+- **Limite dell'ambiente**: nessun browser disponibile per gli agenti. L'aspetto visivo di `dev/components.html` e delle schermate NON è mai stato verificato a occhio.
+
 ## Problemi aperti / domande per l'utente
-- (nessuno)
+- Con 10 oggetti per round e l'alternanza continua, il primo oggetto di ogni round lo apre sempre lo stesso giocatore. Segnalato all'utente; in attesa di un suo eventuale parere.
+- Serve un controllo visivo umano dell'interfaccia (vedi sopra).
