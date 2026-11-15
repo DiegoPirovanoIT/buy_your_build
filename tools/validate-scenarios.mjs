@@ -10,7 +10,27 @@ const MIN_SCORE = -10;
 const MAX_SCORE = 10;
 const COMBO_DESC_MIN = 20;
 const COMBO_DESC_MAX = 150;
-const GENERIC_COMBO_DESCRIPTIONS = new Set(['bella combo', 'non stanno bene', 'buona combo', 'brutta combo']);
+const COMBO_COUNT_MIN = 4;
+const COMBO_COUNT_MAX = 8;
+const MIN_NEGATIVE_ITEMS = 2;
+const MIN_STRONG_ITEMS = 2;
+const STRONG_SCORE = 7;
+const COMMONS_IMAGE = /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/.+/;
+
+// Whole-description patterns (matched on normalize()d text): "bella combo", "stanno bene insieme", ...
+// A description that also gives a concrete reason does not match, because the patterns are anchored.
+const QUALITY = '(?:bella|bellissima|buona|brutta|bruttissima|ottima|pessima|grande|splendida|orribile)';
+const ADVERB = '(?:(?:molto|proprio|davvero|veramente|troppo|piuttosto|decisamente)\\s+)?';
+const GENERIC_COMBO_PATTERNS = [
+  new RegExp(`^(?:(?:è|che|una|questa|questa è una|è una)\\s+)*${QUALITY}\\s+combo$`),
+  new RegExp(`^combo\\s+${ADVERB}${QUALITY}$`),
+  new RegExp(
+    `^(?:(?:questi|queste|i|le|gli|due|tre|oggetti|sono|loro)\\s+)*(?:non\\s+)?` +
+    `(?:stanno|vanno|funzionano|si abbinano)\\s+${ADVERB}(?:bene|male|benissimo|malissimo)(?:\\s+(?:insieme|assieme|tra loro))?$`,
+  ),
+];
+/** Lowercase, punctuation removed, spaces collapsed: used to compare descriptions with labels and patterns. */
+const normalize = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isText = (v) => typeof v === 'string' && v.trim().length > 0;
@@ -117,8 +137,12 @@ export function validateScenario(scenario, { fileName } = {}) {
         if (len < COMBO_DESC_MIN || len > COMBO_DESC_MAX) {
           err(`${at}.description`, `must be ${COMBO_DESC_MIN}-${COMBO_DESC_MAX} characters (found ${len})`);
         }
-        const norm = combo.description.trim().toLowerCase().replace(/[.!\s]+$/, '');
-        if (GENERIC_COMBO_DESCRIPTIONS.has(norm)) err(`${at}.description`, `too generic ("${combo.description}"): explain why`);
+        const norm = normalize(combo.description);
+        if (GENERIC_COMBO_PATTERNS.some((re) => re.test(norm))) {
+          err(`${at}.description`, `too generic ("${combo.description}"): explain why`);
+        } else if (isText(combo.label) && normalize(combo.label) === norm) {
+          err(`${at}.description`, 'must not repeat the label: explain why the bonus/malus exists');
+        }
       }
       if (comboOk) {
         const key = [...combo.items].sort().join('|');
@@ -128,6 +152,38 @@ export function validateScenario(scenario, { fileName } = {}) {
     });
   }
   return errors;
+}
+
+/**
+ * Non-blocking warnings for the writing guidelines of GAME_DESIGN 5.2. Pure and tolerant of malformed
+ * input (structural problems are validateScenario's job); it never changes the validation result.
+ * @param {unknown} scenario
+ * @returns {string[]} readable warnings (empty = guidelines met)
+ */
+export function lintScenario(scenario) {
+  const warnings = [];
+  if (!isObject(scenario)) return warnings;
+  if (Array.isArray(scenario.items)) {
+    const items = scenario.items.filter(isObject);
+    const scores = items.map((it) => it.score).filter((n) => typeof n === 'number');
+    const negatives = scores.filter((n) => n < 0).length;
+    const strong = scores.filter((n) => n >= STRONG_SCORE).length;
+    if (negatives < MIN_NEGATIVE_ITEMS) {
+      warnings.push(`items: only ${negatives} item(s) with a negative score (guideline: at least ${MIN_NEGATIVE_ITEMS}, so "give it to the other" matters)`);
+    }
+    if (strong < MIN_STRONG_ITEMS) {
+      warnings.push(`items: only ${strong} item(s) with score >= ${STRONG_SCORE} (guideline: at least ${MIN_STRONG_ITEMS})`);
+    }
+    scenario.items.forEach((it, i) => {
+      if (isObject(it) && typeof it.image === 'string' && !COMMONS_IMAGE.test(it.image)) {
+        warnings.push(`items[${i}].image: not a Wikimedia Commons URL (expected https://commons.wikimedia.org/wiki/Special:FilePath/...)`);
+      }
+    });
+  }
+  if (Array.isArray(scenario.combos) && (scenario.combos.length < COMBO_COUNT_MIN || scenario.combos.length > COMBO_COUNT_MAX)) {
+    warnings.push(`combos: ${scenario.combos.length} combo(s) (guideline: ${COMBO_COUNT_MIN}-${COMBO_COUNT_MAX})`);
+  }
+  return warnings;
 }
 
 /**
@@ -215,10 +271,12 @@ export async function checkImageUrls(urls, { fetchImpl = fetch, concurrency = 4,
 
 /**
  * Validates a whole scenarios directory (URL ending with "/").
- * @returns {Promise<{ errors: Map<string, string[]>, count: number }>} errors keyed by file label
+ * @returns {Promise<{ errors: Map<string, string[]>, warnings: Map<string, string[]>, count: number }>}
+ *   errors and warnings keyed by file label (warnings come from lintScenario and are never errors)
  */
 export async function validateDirectory(dirUrl, { checkImages = false, fetchImpl } = {}) {
   const errors = new Map();
+  const warnings = new Map();
   const add = (label, list) => {
     if (list.length) errors.set(label, [...(errors.get(label) ?? []), ...list]);
   };
@@ -243,6 +301,8 @@ export async function validateDirectory(dirUrl, { checkImages = false, fetchImpl
       continue;
     }
     add(`scenarios/${name}`, validateScenario(parsed[name], { fileName: name }));
+    const lint = lintScenario(parsed[name]);
+    if (lint.length) warnings.set(`scenarios/${name}`, lint);
   }
   if (index) add('scenarios/index.json', validateIndex(index, { files, scenarios: parsed }));
 
@@ -258,7 +318,7 @@ export async function validateDirectory(dirUrl, { checkImages = false, fetchImpl
       if (failures.has(r.url)) add(`scenarios/${r.name}`, [`${r.field}: ${failures.get(r.url)} (${r.url})`]);
     }
   }
-  return { errors, count: files.length };
+  return { errors, warnings, count: files.length };
 }
 
 async function main() {
@@ -266,9 +326,18 @@ async function main() {
   const dir = process.env.SCENARIOS_DIR
     ? pathToFileURL(process.env.SCENARIOS_DIR.replace(/\/?$/, '/'))
     : new URL('../scenarios/', import.meta.url);
-  const { errors, count } = await validateDirectory(dir, { checkImages });
+  const { errors, warnings, count } = await validateDirectory(dir, { checkImages });
+  let warningCount = 0;
+  for (const [label, list] of warnings) {
+    console.warn(label);
+    for (const w of list) {
+      console.warn(`  - warning: ${w}`);
+      warningCount++;
+    }
+  }
+  const warned = warningCount ? `, ${warningCount} warning(s)` : '';
   if (errors.size === 0) {
-    console.log(`validate: ${count} scenario(s) OK${checkImages ? ' (images checked)' : ''}`);
+    console.log(`validate: ${count} scenario(s) OK${checkImages ? ' (images checked)' : ''}${warned}`);
     return;
   }
   let total = 0;
@@ -279,7 +348,7 @@ async function main() {
       total++;
     }
   }
-  console.error(`validate: ${total} error(s) in ${errors.size} file(s)`);
+  console.error(`validate: ${total} error(s) in ${errors.size} file(s)${warned}`);
   process.exitCode = 1;
 }
 

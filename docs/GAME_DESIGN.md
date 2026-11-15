@@ -128,7 +128,7 @@ Uno scenario è un file JSON in `scenarios/<id>.json`, elencato in `scenarios/in
 - Campo opzionale `theme.accent`: colore esadecimale (`#rrggbb`) per l'accento grafico dello scenario.
 - `image` è un URL https; `emoji` è obbligatoria (serve se l'immagine non si carica).
 - Campi testuali obbligatori: `title`, `shortTitle`, `description`, `name`, `label` e la `description` di ogni combo.
-- Ogni combo **deve** avere una `description` che spiega in modo concreto **perché** c'è quel bonus o malus. Lunghezza 20–150 caratteri. Non sono ammesse frasi generiche tipo "Bella combo" o "Non stanno bene".
+- Ogni combo **deve** avere una `description` che spiega in modo concreto **perché** c'è quel bonus o malus. Lunghezza 20–150 caratteri. Non sono ammesse frasi generiche tipo "Bella combo", "Ottima combo", "Stanno bene insieme" o "Non stanno bene", né una descrizione uguale alla `label`.
 
 ### 5.2 Linee guida per chi scrive gli scenari
 - I punteggi riflettono **quanto l'oggetto è utile/azzeccato** per lo scenario, secondo il buon senso.

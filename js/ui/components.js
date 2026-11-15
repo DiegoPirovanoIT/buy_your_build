@@ -131,11 +131,13 @@ export function createOfferSlider(options) {
     return !!take && take.min === 0;
   };
   const bounds = () => [give ? -give.max : 0, take ? take.max : 0];
+  // Clamp to the allowed interval first, so that an out-of-range value snaps to the closest legal one.
   const nearestLegal = (v) => {
     const [lo, hi] = bounds();
+    const start = Math.min(hi, Math.max(lo, Number.isFinite(v) ? Math.round(v) : 0));
     for (let d = 0; d <= hi - lo; d++) {
-      if (isLegal(v + d)) return v + d;
-      if (isLegal(v - d)) return v - d;
+      if (isLegal(start + d)) return start + d;
+      if (isLegal(start - d)) return start - d;
     }
     return null;
   };
@@ -148,11 +150,12 @@ export function createOfferSlider(options) {
   const acceptBtn = createButton('Accetta', { kind: 'secondary', onClick: () => onAccept && onAccept() });
   const endLeft = el('span');
   const endRight = el('span');
+  const zeroLabel = el('span', { class: 'offer__zero' });
   const root = el('section', { class: `offer offer--${player.id}`, 'data-player': player.id },
     el('p', { class: 'offer__title' }, `Tocca a ${player.name}`),
     summary,
     el('div', { class: 'offer__row' }, minus, range, plus),
-    el('div', { class: 'offer__ends' }, endLeft, el('span', { class: 'offer__zero' }, 'Gratis'), endRight),
+    el('div', { class: 'offer__ends' }, endLeft, zeroLabel, endRight),
     el('div', { class: 'offer__actions' }, offerBtn, acceptBtn));
 
   const step = (dir) => {
@@ -176,6 +179,7 @@ export function createOfferSlider(options) {
     range.disabled = blocked || lo === hi;
     root.classList.toggle('offer--blocked', blocked);
     summary.textContent = blocked ? 'Nessuna offerta possibile' : describeOffer(value, player.name, other.name);
+    zeroLabel.textContent = isLegal(0) ? 'Gratis' : ''; // "free" only when 0 is a legal value
     endLeft.textContent = give ? `Lo do a ${other.name}` : '';
     endRight.textContent = take ? 'Lo prendo' : '';
     minus.disabled = blocked || nearestLegalFrom(-1) === null;

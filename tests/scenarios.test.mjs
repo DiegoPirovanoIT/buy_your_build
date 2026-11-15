@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateScenario, validateIndex, validateDirectory, checkImageUrls } from '../tools/validate-scenarios.mjs';
+import { validateScenario, lintScenario, validateIndex, validateDirectory, checkImageUrls } from '../tools/validate-scenarios.mjs';
 
 const IMG = 'https://commons.wikimedia.org/wiki/Special:FilePath/Example.jpg?width=400';
 
@@ -416,4 +416,119 @@ test('all real scenarios in scenarios/ are valid and consistent with index.json'
   const { errors } = await validateDirectory(new URL('../scenarios/', import.meta.url));
   const report = [...errors].map(([file, list]) => `${file}\n  - ${list.join('\n  - ')}`).join('\n');
   assert.equal(errors.size, 0, report);
+});
+
+// --- generic descriptions (wider patterns) ---
+test('generic combo descriptions: wider patterns are rejected', () => {
+  const generic = [
+    'Che bella combo!', 'Ottima combo.', 'Pessima combo', 'Una brutta combo', 'Combo molto buona',
+    'Stanno bene insieme.', 'Stanno male insieme', 'Questi due stanno davvero bene insieme!',
+    'Vanno male insieme', 'Non stanno proprio bene insieme', 'Funzionano bene tra loro',
+  ];
+  for (const description of generic) {
+    const s = makeScenario();
+    s.combos[0].description = description;
+    assertError(errorsOf(s), 'too generic');
+  }
+});
+
+test('descriptions that mention those words but give a concrete reason pass', () => {
+  const fine = [
+    "Bella combo: il generatore alimenta il filtro e l'aria resta respirabile.",
+    'Stanno bene insieme perché il carburante fa girare il generatore.',
+    'Non stanno bene insieme: il rumore del generatore copre la radio.',
+    "Una combo pessima, il lanciafiamme in uno spazio chiuso consuma l'ossigeno.",
+  ];
+  for (const description of fine) {
+    const s = makeScenario();
+    s.combos[0].description = description;
+    assert.deepEqual(errorsOf(s), [], description);
+  }
+});
+
+test('combo description equal to its label is rejected (ignoring case and punctuation)', () => {
+  const s = makeScenario();
+  s.combos[0].label = 'Aria pulita e fresca';
+  s.combos[0].description = 'aria pulita e fresca!';
+  assertError(errorsOf(s), 'must not repeat the label');
+  s.combos[0].description = 'Aria pulita e fresca, grazie al filtro e al generatore.';
+  assert.deepEqual(errorsOf(s), []);
+});
+
+// --- lintScenario (non-blocking warnings, GAME_DESIGN 5.2) ---
+const wellWritten = () => {
+  const s = makeScenario();
+  s.items.forEach((it, i) => {
+    it.score = [8, 7, 5, 3, 1, 0, -1, -3, 2, 4][i];
+    it.image = 'https://commons.wikimedia.org/wiki/Special:FilePath/File.jpg?width=400';
+  });
+  s.combos = Array.from({ length: 4 }, (_, i) => ({
+    items: [`item-${i + 1}`, `item-${i + 2}`], score: i % 2 ? -3 : 3, label: `Combo ${i}`,
+    description: 'Una spiegazione concreta del perché funziona così.',
+  }));
+  return s;
+};
+const hasWarning = (list, fragment) =>
+  assert.ok(list.some((w) => w.includes(fragment)), `expected "${fragment}" in:\n${list.join('\n')}`);
+
+test('lintScenario: a scenario that follows the guidelines has no warnings (and validates)', () => {
+  assert.deepEqual(lintScenario(wellWritten()), []);
+  assert.deepEqual(errorsOf(wellWritten()), []);
+});
+
+test('lintScenario: fewer than 2 negative items, fewer than 2 items >= 7', () => {
+  const s = wellWritten();
+  s.items[6].score = 0;
+  hasWarning(lintScenario(s), '1 item(s) with a negative score');
+  s.items[1].score = 6;
+  hasWarning(lintScenario(s), '1 item(s) with score >= 7');
+  s.items[0].score = 6;
+  hasWarning(lintScenario(s), '0 item(s) with score >= 7');
+});
+
+test('lintScenario: combo count outside 4-8 (4 and 8 are fine)', () => {
+  const s = wellWritten();
+  s.combos = s.combos.slice(0, 3);
+  hasWarning(lintScenario(s), '3 combo(s)');
+  s.combos = [];
+  hasWarning(lintScenario(s), '0 combo(s)');
+  const eight = wellWritten();
+  eight.combos = Array.from({ length: 8 }, (_, i) => ({ ...wellWritten().combos[0], items: ['item-1', `item-${i + 2}`] }));
+  assert.deepEqual(lintScenario(eight), []);
+  eight.combos.push({ ...eight.combos[0], items: ['item-2', 'item-3'] });
+  hasWarning(lintScenario(eight), '9 combo(s)');
+});
+
+test('lintScenario: image not from Wikimedia Commons Special:FilePath', () => {
+  const s = wellWritten();
+  s.items[2].image = 'https://example.com/pic.jpg';
+  s.items[3].image = 'https://commons.wikimedia.org/wiki/File:Foo.jpg';
+  const w = lintScenario(s);
+  hasWarning(w, 'items[2].image');
+  hasWarning(w, 'items[3].image');
+  assert.equal(w.length, 2);
+});
+
+test('lintScenario never changes validateScenario and tolerates malformed input', () => {
+  const s = makeScenario(); // breaks the guidelines (1 strong item, 2 combos) but is valid
+  assert.ok(lintScenario(s).length > 0);
+  assert.deepEqual(errorsOf(s), []);
+  for (const bad of [null, 42, 'x', [], {}, { items: 'x', combos: 3 }, { items: [null, 7, {}] }]) {
+    assert.ok(Array.isArray(lintScenario(bad)));
+  }
+});
+
+test('directory: warnings are reported separately and never counted as errors', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'byb-lint-'));
+  try {
+    await writeFile(join(dir, 'test-scenario.json'), JSON.stringify(makeScenario()));
+    await writeFile(join(dir, 'index.json'), JSON.stringify({
+      scenarios: [{ id: 'test-scenario', file: 'test-scenario.json', title: 'Scenario di prova', emoji: '🧪' }],
+    }));
+    const { errors, warnings } = await validateDirectory(pathToFileURL(`${dir}/`));
+    assert.equal(errors.size, 0);
+    assert.ok(warnings.get('scenarios/test-scenario.json').length > 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
