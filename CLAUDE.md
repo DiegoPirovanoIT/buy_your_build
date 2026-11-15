@@ -30,6 +30,10 @@ npm run validate -- --check-images    # verifica anche che le immagini rispondan
 npm run serve                         # http://localhost:8080
 ```
 
+## Verifica nel browser (per gli agenti)
+
+Nel sistema non c'è un browser installato, ma Playwright con Chromium headless funziona. NON aggiungerlo a `package.json`: installalo in una cartella temporanea fuori dal repo (`mkdir -p /tmp/byb-pw && cd /tmp/byb-pw && npm init -y && npm i playwright && npx playwright install chromium`; il browser resta in cache in `~/.cache/ms-playwright`, quindi le volte successive è veloce). Scrivi lì gli script che aprono `http://localhost:<porta>/`, giocano cliccando i pulsanti, raccolgono gli errori di console (`page.on('console')`, `page.on('pageerror')`) e fanno screenshot a 375×760 e 1280×800. Guarda gli screenshot con lo strumento di lettura dei file prima di dichiarare verificata una schermata. Usa una porta diversa da 8080 (`PORT=81xx npm run serve`) per non scontrarti con altri agenti, e ferma il server alla fine.
+
 ## Regole non negoziabili
 
 - **€0**: nessun servizio a pagamento, nessuna carta di credito, nessuna chiave API.
