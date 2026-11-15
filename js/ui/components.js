@@ -1,7 +1,8 @@
 // Static UI components (task T4). Every function returns a DOM element.
 // Data is always inserted with textContent / setAttribute, never innerHTML.
-// Colors and durations come from css/tokens.css. No import of events.js yet:
-// buttons take an optional callback; T6 wires `ui:click` on top of it.
+// Colors and durations come from css/tokens.css. Buttons emit `ui:click` { kind } on the event bus
+// (ARCHITECTURE §6) before calling their own onClick.
+import { emit } from '../events.js';
 
 /** Tiny DOM helper: el('div', { class: 'x', 'aria-label': 'y' }, child, 'text', ...). */
 export function el(tag, attrs = {}, ...children) {
@@ -21,7 +22,7 @@ export function el(tag, attrs = {}, ...children) {
 const euro = (n) => `${n} €`;
 
 /**
- * Button. kind: 'primary' | 'secondary' | 'p1' | 'p2' (used later for ui:click payloads).
+ * Button. kind: 'primary' | 'secondary' | 'p1' | 'p2' (sent as the payload of `ui:click`).
  * @returns {HTMLButtonElement}
  */
 export function createButton(label, { onClick, kind = 'primary', block = false, disabled = false, icon = false, ariaLabel } = {}) {
@@ -31,24 +32,35 @@ export function createButton(label, { onClick, kind = 'primary', block = false, 
   if (icon) cls.push('btn--icon');
   const btn = el('button', { type: 'button', class: cls.join(' '), 'aria-label': ariaLabel, 'data-kind': kind }, label);
   btn.disabled = disabled;
-  if (onClick) btn.addEventListener('click', (event) => onClick(event));
+  btn.addEventListener('click', (event) => {
+    emit('ui:click', { kind });
+    if (onClick) onClick(event);
+  });
   return btn;
 }
 
 /**
  * Item image with emoji fallback. item = { image?, emoji, name }.
- * Returns a wrapper-less element: an <img> that swaps itself for <span class="item-emoji"> on error.
+ * Returns a wrapper (.item-media) that always contains the emoji (.item-emoji) as the bottom layer; the <img> is
+ * stacked above it and fades in only once it has loaded. So the emoji is what you see while the image is loading,
+ * never loads, or fails (a pending or blocked request fires no `error` event, which used to leave an empty box).
+ * On error the <img> is removed.
  * @returns {HTMLElement}
  */
 export function createItemImage(item) {
-  const fallback = () => el('span', { class: 'item-emoji', role: 'img', 'aria-label': item.name || '' }, item.emoji || '❓');
-  if (!item.image) return fallback();
+  const emoji = el('span', { class: 'item-emoji', role: 'img', 'aria-label': item.name || '' }, item.emoji || '❓');
+  const wrapper = el('span', { class: 'item-media' }, emoji);
+  if (!item.image) return wrapper;
   const img = el('img', {
-    class: 'item-img', src: item.image, alt: item.name || '',
+    class: 'item-img', src: item.image, alt: '', 'aria-hidden': 'true',
     loading: 'lazy', referrerpolicy: 'no-referrer', decoding: 'async',
   });
-  img.addEventListener('error', () => img.replaceWith(fallback()), { once: true });
-  return img;
+  const onLoad = () => (img.naturalWidth > 0 ? wrapper.classList.add('is-loaded') : img.remove());
+  img.addEventListener('load', onLoad, { once: true });
+  img.addEventListener('error', () => img.remove(), { once: true });
+  wrapper.append(img);
+  if (img.complete) onLoad(); // already settled (cache) before the listeners existed
+  return wrapper;
 }
 
 /** Big card for the item on auction. item = { name, description, image?, emoji }. */
@@ -269,5 +281,150 @@ export function createAuctionLayout({ top = [], panels = [] } = {}) {
   const root = el('div', { class: 'auction' }, topEl, bottomEl);
   root.top = topEl;
   root.bottom = bottomEl;
+  return root;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Form controls (used by the settings screen). Every control is wrapped in a `.field` element with
+// setError(message | null) to show a validation message next to the field.
+// ---------------------------------------------------------------------------------------------
+
+let fieldCounter = 0;
+const nextId = (prefix) => `${prefix}-${++fieldCounter}`;
+
+/**
+ * Generic field wrapper: label, optional hint, the control(s) and an error line.
+ * `focusTarget` is the element that receives aria-describedby / aria-invalid and focus().
+ * Returns the root with setError(message|null) and focus().
+ */
+export function createField({ label, hint, control, focusTarget, labelFor, asGroup = false }) {
+  const errorId = nextId('field-error');
+  const hintId = nextId('field-hint');
+  const errorEl = el('p', { class: 'field__error', id: errorId, hidden: true });
+  const labelEl = el(asGroup ? 'span' : 'label', { class: 'field__label', for: asGroup ? null : labelFor }, label);
+  const root = el('div', { class: 'field', role: asGroup ? 'group' : null },
+    labelEl,
+    hint ? el('p', { class: 'field__hint', id: hintId }, hint) : null,
+    control,
+    errorEl);
+  const describe = () => {
+    if (!focusTarget) return;
+    const ids = [hint ? hintId : null, errorEl.hidden ? null : errorId].filter(Boolean).join(' ');
+    if (ids) focusTarget.setAttribute('aria-describedby', ids); else focusTarget.removeAttribute('aria-describedby');
+    if (errorEl.hidden) focusTarget.removeAttribute('aria-invalid'); else focusTarget.setAttribute('aria-invalid', 'true');
+  };
+  root.setError = (message) => {
+    errorEl.hidden = !message;
+    errorEl.textContent = message || '';
+    root.classList.toggle('field--invalid', !!message);
+    describe();
+  };
+  root.focus = () => focusTarget?.focus();
+  if (asGroup) {
+    const groupLabelId = nextId('field-label');
+    labelEl.id = groupLabelId;
+    root.setAttribute('aria-labelledby', groupLabelId);
+  }
+  describe();
+  return root;
+}
+
+/** Single-line text field. Returns a field with getValue(), setValue(v). onInput(value) on every keystroke. */
+export function createTextField({ label, value = '', placeholder, hint, onInput } = {}) {
+  const id = nextId('text');
+  const input = el('input', { class: 'input', type: 'text', id, placeholder, autocomplete: 'off', spellcheck: 'false' });
+  input.value = value; // no hard maxlength: an over-long value shows a validation message instead
+  input.addEventListener('input', () => onInput && onInput(input.value));
+  const root = createField({ label, hint, control: input, focusTarget: input, labelFor: id });
+  root.getValue = () => input.value;
+  root.setValue = (v) => { input.value = v; };
+  return root;
+}
+
+/**
+ * Numeric stepper: [-] [number] [+]. The number is editable, so an invalid value can be typed and the
+ * validation message shown: onChange(value) gets a number, or NaN if the box is empty. min/max only limit the buttons.
+ * Returns a field with getValue(), setValue(v), setMax(n).
+ */
+export function createStepper({ label, value, min = 0, max = 100, unit, hint, onChange } = {}) {
+  const id = nextId('step');
+  let hi = max;
+  const input = el('input', { class: 'input stepper__input', type: 'number', inputmode: 'numeric', id, step: 1 });
+  input.value = String(value);
+  const read = () => (input.value.trim() === '' ? NaN : Number(input.value));
+  const minus = createButton('−', { icon: true, kind: 'secondary', ariaLabel: `${label}: meno` });
+  const plus = createButton('+', { icon: true, kind: 'secondary', ariaLabel: `${label}: più` });
+  const sync = () => {
+    const v = read();
+    minus.disabled = Number.isFinite(v) && v <= min;
+    plus.disabled = Number.isFinite(v) && v >= hi;
+  };
+  const change = (v) => { input.value = String(v); sync(); if (onChange) onChange(v); };
+  minus.addEventListener('click', () => { const v = read(); change(Number.isFinite(v) ? Math.max(min, Math.min(hi, Math.round(v) - 1)) : min); });
+  plus.addEventListener('click', () => { const v = read(); change(Number.isFinite(v) ? Math.min(hi, Math.max(min, Math.round(v) + 1)) : min); });
+  input.addEventListener('input', () => { sync(); if (onChange) onChange(read()); });
+  const control = el('div', { class: 'stepper' }, minus, input, unit ? el('span', { class: 'stepper__unit' }, unit) : null, plus);
+  const root = createField({ label, hint, control, focusTarget: input, labelFor: id });
+  root.getValue = read;
+  root.setValue = (v) => { input.value = String(v); sync(); };
+  root.setMax = (n) => { hi = n; sync(); };
+  sync();
+  return root;
+}
+
+/** On/off switch. Returns a field-like root with getValue(), setValue(bool), setError(msg). onChange(bool). */
+export function createToggle({ label, hint, checked = false, onChange } = {}) {
+  const id = nextId('toggle');
+  const input = el('input', { class: 'switch__input', type: 'checkbox', role: 'switch', id });
+  input.checked = checked;
+  input.addEventListener('change', () => onChange && onChange(input.checked));
+  const control = el('label', { class: 'switch', for: id },
+    el('span', { class: 'switch__text' },
+      el('span', { class: 'switch__label' }, label),
+      hint ? el('span', { class: 'switch__hint' }, hint) : null),
+    input,
+    el('span', { class: 'switch__track', 'aria-hidden': 'true' }, el('span', { class: 'switch__thumb' })));
+  const errorEl = el('p', { class: 'field__error', hidden: true });
+  const root = el('div', { class: 'field field--toggle' }, control, errorEl);
+  root.setError = (message) => { errorEl.hidden = !message; errorEl.textContent = message || ''; root.classList.toggle('field--invalid', !!message); };
+  root.focus = () => input.focus();
+  root.getValue = () => input.checked;
+  root.setValue = (v) => { input.checked = !!v; };
+  return root;
+}
+
+/**
+ * Choice between a few options (radio group). options = [{ value, label, hint? }].
+ * Returns a field with getValue(), setValue(v). onChange(value).
+ */
+export function createSegmented({ label, options, value, hint, onChange } = {}) {
+  const name = nextId('seg');
+  const inputs = options.map((opt) => {
+    const input = el('input', { class: 'segmented__input', type: 'radio', name, value: opt.value });
+    input.checked = opt.value === value;
+    input.addEventListener('change', () => { if (input.checked && onChange) onChange(opt.value); });
+    return { opt, input };
+  });
+  const control = el('div', { class: 'segmented' }, inputs.map(({ opt, input }) =>
+    el('label', { class: 'segmented__option' }, input,
+      el('span', { class: 'segmented__body' },
+        el('span', { class: 'segmented__label' }, opt.label),
+        opt.hint ? el('span', { class: 'segmented__hint' }, opt.hint) : null))));
+  const root = createField({ label, hint, control, focusTarget: inputs[0]?.input, asGroup: true });
+  root.getValue = () => inputs.find(({ input }) => input.checked)?.opt.value ?? null;
+  root.setValue = (v) => inputs.forEach(({ opt, input }) => { input.checked = opt.value === v; });
+  return root;
+}
+
+/** Slider field. Returns a field with getValue(), setValue(v). onInput(number); format(v) gives the shown text. */
+export function createRangeField({ label, min = 0, max = 100, value = 0, hint, format = String, onInput } = {}) {
+  const id = nextId('range');
+  const input = el('input', { class: 'range', type: 'range', id, min, max, step: 1 });
+  input.value = String(value);
+  const out = el('output', { class: 'range__value', for: id }, format(value));
+  input.addEventListener('input', () => { out.textContent = format(Number(input.value)); if (onInput) onInput(Number(input.value)); });
+  const root = createField({ label, hint, control: el('div', { class: 'range-row' }, input, out), focusTarget: input, labelFor: id });
+  root.getValue = () => Number(input.value);
+  root.setValue = (v) => { input.value = String(v); out.textContent = format(v); };
   return root;
 }
