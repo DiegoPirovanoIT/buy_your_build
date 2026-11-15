@@ -76,7 +76,7 @@ I test in `tests/` importano solo `engine/`, `settings.js` (logica pura) e i JSO
 ```js
 createRng(seed?: number) → { next(): number /* [0,1) */, int(min, max), shuffle(array) /* copia */ , pick(array) }
 ```
-Senza seed usa un seed casuale. I test passano sempre un seed.
+Senza seed usa un seed casuale (`crypto.getRandomValues`, mai `Math.random`). I test passano sempre un seed. `int(min, max)` include entrambi gli estremi. Algoritmo: mulberry32.
 
 ### 4.2 `engine/auction.js` (regole: GAME_DESIGN §4)
 ```js
@@ -102,7 +102,9 @@ Invarianti da testare:
 - Controfferta: `to !== current.to` (ribalta il risultato), `amount ≥ current.amount + 1`, `amount ≤ money[by]`.
 - `accept` è vietato in `awaiting-open`.
 - Se il giocatore di turno non può controbattere, `offer()` restituisce lo stato già `done` (accettazione automatica).
-- Un'azione illegale lancia `AuctionError` con un `code` (`"ILLEGAL_AMOUNT"`, `"NOT_ALLOWED"`, …).
+- Un'azione illegale lancia `AuctionError` (esportata da `auction.js`) con un `code`: `"ILLEGAL_AMOUNT"` (importo non intero o fuori da min/max), `"NOT_ALLOWED"` (direzione non permessa, `accept` in `awaiting-open`), `"AUCTION_DONE"` (azione su asta finita), `"INVALID_ARGS"`.
+- `legalOffers`: dopo un'offerta aperta, al massimo uno tra `take` e `give` è non-null (la controfferta deve ribaltare il risultato): se l'oggetto va a chi è di turno resta solo `give`, altrimenti solo `take`. In `awaiting-open` `give` è `null` se chi apre ha 0 €. Su asta `done` tutto è `null`/`false`.
+- A fine asta (`done`) `turn` resta quello dell'ultimo giocatore a cui toccava decidere; `money` non cambia mai (il pagamento lo applica `game.js`).
 
 ### 4.3 `engine/scoring.js` (regole: GAME_DESIGN §6.2, §6.3)
 ```js
@@ -121,30 +123,47 @@ compareBuilds(scenario, { p1: ids, p2: ids }, money: { p1, p2 }) → {
 ### 4.4 `engine/game.js` (regole: GAME_DESIGN §3)
 ```js
 createGame({ settings, scenarioIds, rng }) → GameState
-// sceglie gli scenari dei round (senza ripetizioni) e il primo apritore a caso
-startRound(state, scenario) → GameState                 // mescola gli oggetti, resetta il budget
-currentAuction(state) → AuctionState | null
-applyAuction(state, auctionState) → GameState           // registra il risultato, passa all'oggetto successivo
-finishRound(state, verdict) → GameState                 // verdict: { winner, source: "auto"|"human", breakdown? }
-isRoundOver(state), isGameOver(state)
-gameSummary(state) → { roundsWon: { p1, p2 }, totalScore: { p1, p2 }, winner, rounds: [...] }
+// scenarioIds = scenari abilitati. Sceglie `settings.rounds` scenari senza ripetizioni (lancia se sono meno),
+// il primo apritore a caso e un `seed` salvato nello stato.
+startRound(state, scenario) → GameState                 // scenario.id deve essere roundScenarioIds[roundIndex]
+                                                        // mescola gli oggetti (rng derivato da seed + roundIndex,
+                                                        // così lo stato resta serializzabile e la firma senza rng),
+                                                        // resetta il budget, apre la prima asta con nextOpener
+currentAuction(state) → AuctionState | null             // asta fresca ("awaiting-open") dell'oggetto corrente
+applyAuction(state, auctionState) → GameState           // auction "done": paga l'ultimo offerente, assegna l'oggetto,
+                                                        // alterna nextOpener, apre l'asta successiva (null dopo il 10°)
+isRoundOver(state), isGameOver(state)                   // round: tutti gli oggetti assegnati; game: results.length === rounds
+roundBreakdown(state, scenario) → compareBuilds(...)    // breakdown automatico del round corrente (calcolabile anche col giudice umano)
+autoVerdict(state, scenario) → { winner, source: "auto", breakdown }
+finishRound(state, verdict) → GameState                 // verdict: { winner: "p1"|"p2"|null, source: "auto"|"human", breakdown? }
+                                                        // il verdetto umano non può essere null; passare `breakdown`
+                                                        // (roundBreakdown) anche col giudice umano per avere i punteggi nel riepilogo
+gameSummary(state) → {
+  roundsWon: { p1, p2 }, totalScore: { p1, p2 },
+  winner: "p1"|"p2"|null, tieBreak: "rounds"|"score"|"draw",
+  rounds: [{ scenarioId, winner, source, tieBreak, scores: {p1,p2}, moneyLeft, owned, breakdown }]
+}
+// winner = più round vinti; a pari round: punteggio totale se judgeMode === "auto", altrimenti pareggio (null).
+// I round pari non contano per nessuno. Un round senza breakdown conta 0 nei punteggi.
 
 GameState = {
   settings,
+  seed,                              // per derivare l'ordine degli oggetti di ogni round
   roundScenarioIds: [id],
-  roundIndex,
-  nextOpener: "p1" | "p2",           // l'alternanza continua tra i round
+  roundIndex,                        // round corrente; incrementato da finishRound
+  nextOpener: "p1" | "p2",           // chi aprirà la prossima asta; l'alternanza continua tra i round
   round: {
     scenarioId, itemOrder: [id], itemIndex,
     money: { p1, p2 },
     owned: { p1: [id], p2: [id] },
     log: [{ itemId, owner, payer, paid, history }],
     auction: AuctionState | null,
-    verdict: null | {...}
+    verdict: null | { winner, source, breakdown }   // il round resta in stato dopo finishRound, per la UI del risultato
   } | null,
   results: [{ scenarioId, owned, moneyLeft, verdict, breakdown }]
 }
 ```
+Flusso UI: `startRound` → (`currentAuction` → `offer`/`accept` sulla copia locale → `applyAuction`) × 10 → `finishRound(autoVerdict(...))` oppure verdetto umano → `startRound` successivo o `gameSummary`.
 
 ## 5. Stato dell'app, router e schermate
 
