@@ -54,3 +54,131 @@
   .settings__footer { margin: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); }
   .settings__buttons { grid-template-columns: 2fr 1fr; }
 }
+
+/* =====================================================================================
+   Game flow (T6/T7): game bar, intro, auction, judge, round result, final
+   ===================================================================================== */
+
+.btn--small { min-height: 2.25rem; padding: var(--sp-1) var(--sp-3); font-size: var(--fs-sm); }
+
+.game-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-2); }
+.game-bar__title { font-family: var(--font-display); font-weight: 800; text-align: center; overflow-wrap: anywhere; }
+.game-bar__meta { color: var(--text-dim); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
+
+.confirm { display: flex; flex-direction: column; gap: var(--sp-3); }
+.confirm__actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.confirm__actions .btn { flex: 1 1 8rem; }
+
+.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 90; } /* below the modal (100) */
+
+/* ---------- Intro ---------- */
+.screen--intro { min-height: calc(100dvh - 2 * var(--sp-3)); }
+.intro__body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--sp-2); }
+.intro__round { margin: 0; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.intro__emoji { font-size: 5rem; line-height: 1; margin: var(--sp-2) 0; }
+.intro__title { font-size: var(--fs-xl); }
+.intro__desc { color: var(--text-dim); max-width: 28rem; }
+.intro__facts { width: 100%; max-width: 22rem; margin-top: var(--sp-3); }
+.intro__opener--p1 { color: var(--p1); }
+.intro__opener--p2 { color: var(--p2); }
+
+/* ---------- Auction ---------- */
+.screen--auction { gap: var(--sp-2); }
+.auction { gap: var(--sp-2); }
+.auction__top { gap: var(--sp-2); }
+.auction .item-card { grid-template-columns: 5.5rem 1fr; padding: var(--sp-2); gap: var(--sp-2); }
+.auction .item-card__media .item-emoji { font-size: 2.5rem; }
+.auction .item-card__name { font-size: var(--fs-md); }
+.auction .item-card__desc { font-size: 0.8rem; }
+.auction__current { margin: 0; min-height: 1.4em; font-weight: 700; }
+.auction__current--take { color: var(--gold); }
+.auction__current--give { color: var(--neg); }
+.auction .offer { padding: var(--sp-2) var(--sp-3); }
+.auction .offer__summary { min-height: 2.6em; margin-bottom: var(--sp-1); font-size: var(--fs-md); }
+.auction .offer__actions { margin-top: var(--sp-2); }
+.auction .offer__ends { gap: var(--sp-2); }
+.auction .offer__ends span { overflow-wrap: anywhere; }
+.auction__bottom { gap: var(--sp-2); }
+.auction .player-panel { --thumb: 2.5rem; padding: var(--sp-2); min-width: 0; }
+.auction .player-panel__grid { gap: var(--sp-1); }
+.auction .player-panel__turn { margin-top: 0; }
+.auction .thumb .item-emoji { font-size: 1.2rem; }
+
+.auction__result {
+  padding: var(--sp-3); background: var(--surface); border: 2px solid var(--gold); border-radius: var(--radius);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.auction__result--p1 { border-color: var(--p1); }
+.auction__result--p2 { border-color: var(--p2); }
+.auction__result-title { margin: 0; font-family: var(--font-display); font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; }
+.auction__result-text { margin: 0; font-size: var(--fs-lg); font-weight: 800; }
+.auction__result-note { margin: 0; font-size: var(--fs-sm); }
+
+/* ---------- Judge ---------- */
+.judge__title { margin: 0; text-align: center; }
+.judge__sub, .judge__hint { text-align: center; margin: 0; }
+.judge__builds { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); align-items: start; }
+.build {
+  --bc: var(--accent);
+  display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; padding: var(--sp-2);
+  background: var(--surface); border: 3px solid var(--border); border-top: 5px solid var(--bc);
+  border-radius: var(--radius); cursor: pointer; text-align: left;
+}
+.build--p1 { --bc: var(--p1); }
+.build--p2 { --bc: var(--p2); }
+.build[aria-disabled="true"] { cursor: default; }
+.build__title { margin: 0; font-size: var(--fs-md); color: var(--bc); text-align: center; overflow-wrap: anywhere; }
+.build--anon .build__title { color: var(--text); }
+.build__owner--p1 { color: var(--p1); }
+.build__owner--p2 { color: var(--p2); }
+.build__items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.build__item { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.build__img { flex: none; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); }
+.build__img .item-emoji { font-size: 1.3rem; }
+.build__name { font-size: 0.8rem; line-height: 1.2; overflow-wrap: anywhere; min-width: 0; }
+.build__empty { padding: var(--sp-3) 0; text-align: center; }
+.build.is-selected { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold), var(--shadow); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+.build.is-winner { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold), var(--shadow); }
+.build.is-revealed:not(.is-winner) { opacity: 0.7; }
+.judge__verdict { margin: 0; text-align: center; font-weight: 800; font-size: var(--fs-lg); color: var(--gold); }
+
+/* ---------- Round result ---------- */
+.result__hero, .final__hero { text-align: center; padding-top: var(--sp-3); }
+.result__trophy, .final__trophy { font-size: 4rem; line-height: 1; margin: 0 0 var(--sp-2); }
+.result__winner, .final__title { font-size: var(--fs-xl); }
+.result__winner--p1, .final__hero--p1 .final__title { color: var(--p1); }
+.result__winner--p2, .final__hero--p2 .final__title { color: var(--p2); }
+.result__score-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.result__score {
+  --pc: var(--p1);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); min-width: 0;
+  padding: var(--sp-3); background: var(--surface-2); border: 2px solid var(--border); border-top: 4px solid var(--pc); border-radius: var(--radius);
+}
+.result__score--p2 { --pc: var(--p2); }
+.result__score.is-winner { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.result__score-name { font-weight: 800; color: var(--pc); overflow-wrap: anywhere; text-align: center; }
+.result__score-value { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.result__score-money { font-size: var(--fs-sm); }
+.result__tie { margin: var(--sp-3) 0; }
+.result__scores .btn { margin-top: var(--sp-2); }
+
+/* ---------- Breakdown (round details) ---------- */
+.breakdown { display: grid; grid-template-columns: 1fr; gap: var(--sp-4); }
+.breakdown__player { min-width: 0; }
+.breakdown__name { margin: 0 0 var(--sp-1); font-size: var(--fs-lg); }
+.breakdown__player--p1 .breakdown__name { color: var(--p1); }
+.breakdown__player--p2 .breakdown__name { color: var(--p2); }
+.breakdown__sub { margin: var(--sp-2) 0 0; color: var(--text-dim); font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.06em; }
+.breakdown__total { display: flex; justify-content: space-between; align-items: center; padding-top: var(--sp-2); font-weight: 800; font-size: var(--fs-lg); }
+.score-row__items { grid-column: 1 / -1; font-size: var(--fs-sm); color: var(--gold); }
+.score-row__label { overflow-wrap: anywhere; }
+@media (min-width: 640px) { .breakdown { grid-template-columns: 1fr 1fr; } }
+
+@media (min-width: 640px) {
+  .auction .item-card { grid-template-columns: 8rem 1fr; padding: var(--sp-3); }
+  .auction .item-card__name { font-size: var(--fs-lg); }
+  .auction .item-card__desc { font-size: var(--fs-sm); }
+  .auction .player-panel { --thumb: 3rem; }
+  .build__img { width: 3rem; height: 3rem; }
+  .build__name { font-size: var(--fs-sm); }
+}

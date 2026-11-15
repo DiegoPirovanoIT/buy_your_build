@@ -35,7 +35,8 @@ js/
     game.js
     rng.js
   ui/
-    components.js          # el(), createButton(), createItemImage(), createItemCard(), createThumb(), createPlayerPanel(),
+    components.js          # (T6/T7: scenarioAccent(), applyScenarioTheme(), playerNames(), createConfirm(), createLeaveButton(), createGameBar(), createRoundBreakdown())
+                           # el(), createButton(), createItemImage(), createItemCard(), createThumb(), createPlayerPanel(),
                            # describeOffer(), createOfferSlider(), createModal(), createScoreBadge(), createScoreRow(), createAuctionLayout(),
                            # form: createField(), createTextField(), createStepper(), createToggle(), createSegmented(), createRangeField()
     home.js  settings.js  intro.js  auction.js  judge.js  roundResult.js  final.js
@@ -203,15 +204,16 @@ on(name, handler) → unsubscribe;  emit(name, payload)
 | Evento | Payload | Chi lo emette |
 |---|---|---|
 | `screen:change` | `{ from, to }` | router |
-| `round:start` | `{ roundIndex, scenario }` | ui/intro |
-| `item:reveal` | `{ item, index, opener }` | ui/auction |
+| `round:start` | `{ roundIndex, scenario }` | ui/intro (quando l'intro è mostrata, dopo `startRound`) |
+| `item:reveal` | `{ item, index, opener }` | ui/auction (`index` 0-based) |
 | `offer:made` | `{ by, to, amount, isCounter }` | ui/auction |
-| `offer:accepted` | `{ by, current }` | ui/auction |
-| `item:assigned` | `{ item, owner, payer, paid }` | ui/auction |
-| `money:change` | `{ player, from, to }` | ui/auction |
-| `judge:reveal` | `{ side, itemId }` | ui/judge |
-| `round:end` | `{ roundIndex, winner, scores? }` | ui/roundResult |
-| `game:end` | `{ winner, summary }` | ui/final |
+| `offer:accepted` | `{ by, current, auto }` | ui/auction (`by` = chi accetta, o chi non poteva controbattere se `auto`; `current` = ultima offerta `{ by, to, amount }`) |
+| `item:assigned` | `{ item, owner, payer, paid, auto, index }` | ui/auction (dopo `applyAuction`) |
+| `money:change` | `{ player, from, to }` | ui/auction (solo se `paid > 0`; `player` = chi paga) |
+| `judge:reveal` | `{ side, itemId, owner }` | ui/judge: dopo la conferma del verdetto, uno per ogni oggetto delle due build (`side` = `left`/`right`, `owner` = `p1`/`p2`, svelato solo ora) |
+| `judge:verdict` | `{ winner, side, shuffled }` | ui/judge (nuovo): subito prima dei `judge:reveal` |
+| `round:end` | `{ roundIndex, winner, source, tieBreak, scores? }` | ui/roundResult (quando il risultato è mostrato; `scores` `{ p1, p2 }` solo in modalità auto; `roundIndex` 0-based) |
+| `game:end` | `{ winner, summary }` | ui/final (`summary` = `gameSummary`) |
 | `ui:click` | `{ kind }` | ui/components: `createButton` lo emette a ogni click (`kind` = `primary`/`secondary`/`p1`/`p2`), prima di `onClick` |
 
 Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli in try/catch dentro `events.js`.
