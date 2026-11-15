@@ -34,7 +34,7 @@ Gli agenti sono definiti in `.claude/agents/` (modello ed effort sono fissati l�
 ## Fase 0 — Scaffold (1 agente, sequenziale)
 **T0. Struttura del progetto**
 - Crea la struttura di cartelle di ARCHITECTURE §2 (file vuoti o stub dove serve), con `.gitignore` (`node_modules/`).
-- `package.json`: script `test` (`node --test tests/`), `validate` (`node tools/validate-scenarios.mjs`), `serve` (server statico locale, es. `npx serve` oppure un piccolo script Node).
+- `package.json`: script `test` (`node --test`), `validate` (`node tools/validate-scenarios.mjs`), `serve` (server statico locale, es. `npx serve` oppure un piccolo script Node).
 - Rimuovi `wrangler` dalle devDependencies: l'online è fuori scope per ora.
 - Workflow `ci.yml` (validate + test) e `pages.yml` (deploy di `main` su Pages).
 - `index.html` minimale che carica `js/main.js` e mostra "Buy Your Build".

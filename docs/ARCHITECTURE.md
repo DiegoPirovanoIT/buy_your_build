@@ -194,7 +194,7 @@ Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli i
 
 ## 10. Test e qualità
 
-- `npm test` → `node --test tests/`. Coprire ogni regola di GAME_DESIGN §4 e §6 con almeno un test.
+- `npm test` → `node --test`. Coprire ogni regola di GAME_DESIGN §4 e §6 con almeno un test.
 - `npm run validate` → controlla tutti gli scenari. `-- --check-images` fa anche richieste di rete (non in CI per default).
 - `npm run serve` → http://localhost:8080.
 - CI (`ci.yml`): validate + test su ogni push e PR. Deploy (`pages.yml`): pubblica la root del repo su Pages da `main`.
