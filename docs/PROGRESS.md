@@ -13,11 +13,11 @@
 | T3a | Validatore degli scenari | ✅  | task/T3a-validator | unito a main |
 | T3b | 3 scenari (Bunker, Pizza, Vacanza) | ✅ | task/T3b-scenarios | dipende da T3a |
 | T4 | Design system + componenti | ✅  | task/T4-design-system | unito a main |
-| T5 | Router, Home, Impostazioni | ⬜ | | dipende da T1–T4 |
-| T6 | Flusso del round (intro, asta, giudice, risultato) | ⬜ | | dipende da T1–T4 |
-| T7 | Schermata finale funzionale | ⬜ | | dipende da T6 |
+| T5 | Router, Home, Impostazioni | ✅ | task/T5-app-shell | unito a main |
+| T6 | Flusso del round (intro, asta, giudice, risultato) | ✅ | task/T6-T7-game-screens | unito a main |
+| T7 | Schermata finale funzionale | ✅ | task/T6-T7-game-screens | unito a main |
 | T8 | Grafica e animazioni | ⬜ | | dipende da T7 |
-| T9 | Audio | ⬜ | | dipende da T7 |
+| T9 | Audio | 🟡 | task/T9-audio | in corso |
 | T10 | QA e rilascio | ⬜ | | dipende da T8, T9 |
 | T11+ | Pacchetti di scenari fino a 50 | ⬜ | | dopo T3 |
 
@@ -45,6 +45,12 @@ Scenari pubblicati: **3 / 50**
 - T3b (3 scenari) in corso.
 - **Limite dell'ambiente**: nessun browser disponibile per gli agenti. L'aspetto visivo di `dev/components.html` e delle schermate NON è mai stato verificato a occhio.
 
+### 2026-11-15 — Fasi 2 e 3
+- Correzioni della revisione di Fase 1 e T3b (3 scenari) uniti a main.
+- Browser per gli agenti: Playwright + Chromium headless in `/tmp/byb-pw` (vedi CLAUDE.md). Da qui in poi le schermate sono verificate con screenshot reali.
+- T5 (ossatura, home, impostazioni) e T6+T7 (intro, asta, giudice, risultato, finale) uniti a main: la partita completa è giocabile e pubblicata. 146 test.
+- In corso: revisione delle Fasi 2–3 (code-reviewer) e T9 (audio). T8 (grafica) parte dopo le correzioni della revisione.
+
 ## Problemi aperti / domande per l'utente
 - Con 10 oggetti per round e l'alternanza continua, il primo oggetto di ogni round lo apre sempre lo stesso giocatore. Segnalato all'utente; in attesa di un suo eventuale parere.
-- Serve un controllo visivo umano dell'interfaccia (vedi sopra).
+- Nessuno ha ancora ascoltato l'audio né provato il gioco su un telefono vero: serve una prova umana.
