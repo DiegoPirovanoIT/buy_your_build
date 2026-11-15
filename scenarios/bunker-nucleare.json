@@ -1,0 +1,158 @@
+{
+  "id": "bunker-nucleare",
+  "title": "Costruisci il tuo bunker nucleare",
+  "shortTitle": "Bunker",
+  "emoji": "☢️",
+  "description": "La fine del mondo è vicina e hai posto per poche cose. Cosa porti sotto terra?",
+  "theme": {
+    "accent": "#7cb518"
+  },
+  "items": [
+    {
+      "id": "filtro-aria",
+      "name": "Filtro NBC e maschere antigas",
+      "description": "Aria pulita da particelle radioattive, batteri e gas. Senza, il bunker è una bara.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Gp7_gas_mask.jpg?width=400",
+      "emoji": "😷",
+      "score": 9
+    },
+    {
+      "id": "acqua-potabile",
+      "name": "Scorta d'acqua potabile",
+      "description": "Casse di bottiglie sigillate: si sopravvive tre giorni senza acqua, non di più.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Bottled_Water_Boxes_Stacked_at_Family_Mart_Xindong_Store_20150820.jpg?width=400",
+      "emoji": "💧",
+      "score": 8
+    },
+    {
+      "id": "scatolette",
+      "name": "Scatolette a lunga conservazione",
+      "description": "Fagioli, tonno e pesche sciroppate. Non è gourmet, ma dura vent'anni.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/GuLong_canned_food_on_the_shelf.jpg?width=400",
+      "emoji": "🥫",
+      "score": 6
+    },
+    {
+      "id": "generatore",
+      "name": "Generatore diesel",
+      "description": "Luce, ventilazione e frigo, finché c'è qualcosa da bruciare.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Diesel_Generators.jpg?width=400",
+      "emoji": "⚡",
+      "score": 5
+    },
+    {
+      "id": "contatore-geiger",
+      "name": "Contatore Geiger",
+      "description": "Ti dice quanto è brutto là fuori. Non cambia la situazione, ma almeno la conosci.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Geiger_counter.jpg?width=400",
+      "emoji": "☢️",
+      "score": 3
+    },
+    {
+      "id": "radio-manovella",
+      "name": "Radio a manovella",
+      "description": "Funziona senza pile: basta girare. Capti le ultime notizie, se c'è ancora qualcuno che trasmette.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/%E9%9D%9E%E5%B8%B8%E7%94%A8%E3%83%A9%E3%82%B8%E3%82%AA_(6775749265).jpg?width=400",
+      "emoji": "📻",
+      "score": 3
+    },
+    {
+      "id": "carburante",
+      "name": "Taniche di carburante",
+      "description": "Una scorta di gasolio. Da sola non scalda, non illumina e non si mangia.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Jerrycan_at_store.jpg?width=400",
+      "emoji": "⛽",
+      "score": 2
+    },
+    {
+      "id": "giochi-da-tavolo",
+      "name": "Giochi da tavolo",
+      "description": "Monopoli, Risiko, carte. Sembrano superflui finché non hai passato un mese al chiuso.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Board_game_pieces.jpg?width=400",
+      "emoji": "🎲",
+      "score": 2
+    },
+    {
+      "id": "pianoforte",
+      "name": "Pianoforte a coda",
+      "description": "Per le serate eleganti dell'apocalisse. Occupa metà bunker e nessuno sa suonarlo.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Steinway_%26_Sons_concert_grand_piano,_model_D-274,_manufactured_at_Steinway's_factory_in_Hamburg,_Germany.png?width=400",
+      "emoji": "🎹",
+      "score": -4
+    },
+    {
+      "id": "barbecue",
+      "name": "Barbecue a carbone",
+      "description": "Una grigliata per tirare su il morale. In una stanza sigillata, però, è un'idea pessima.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Charcoal_grill_ready_for_barbecue_with_ashes_arranged_neatly_at_summer_gathering_in_backyard.jpg?width=400",
+      "emoji": "🍖",
+      "score": -6
+    }
+  ],
+  "combos": [
+    {
+      "items": [
+        "generatore",
+        "carburante"
+      ],
+      "score": 6,
+      "label": "Corrente garantita",
+      "description": "Il generatore senza gasolio è un soprammobile: con le taniche fa luce e ventilazione per mesi."
+    },
+    {
+      "items": [
+        "filtro-aria",
+        "acqua-potabile",
+        "scatolette"
+      ],
+      "score": 9,
+      "label": "Kit di sopravvivenza",
+      "description": "Respiri, bevi e mangi: le tre cose che servono davvero per aspettare che il mondo si calmi."
+    },
+    {
+      "items": [
+        "contatore-geiger",
+        "radio-manovella"
+      ],
+      "score": 4,
+      "label": "Quando si può uscire?",
+      "description": "Il Geiger misura la radioattività, la radio dice cosa fanno gli altri: così capisci quando aprire il portello."
+    },
+    {
+      "items": [
+        "filtro-aria",
+        "barbecue"
+      ],
+      "score": -5,
+      "label": "Monossido di carbonio",
+      "description": "Il carbone consuma ossigeno e produce CO: il filtro NBC non lo ferma e in un bunker l'aria è poca."
+    },
+    {
+      "items": [
+        "generatore",
+        "radio-manovella"
+      ],
+      "score": -3,
+      "label": "Doppione di corrente",
+      "description": "Se hai già un generatore la radio a manovella serve a poco: uno dei due è energia sprecata."
+    },
+    {
+      "items": [
+        "pianoforte",
+        "giochi-da-tavolo"
+      ],
+      "score": 3,
+      "label": "Serate di svago",
+      "description": "Un mese sottoterra: tra una partita a carte e una canzone al pianoforte nessuno impazzisce."
+    },
+    {
+      "items": [
+        "pianoforte",
+        "generatore"
+      ],
+      "score": -4,
+      "label": "Niente spazio",
+      "description": "Il pianoforte si prende il posto del generatore, e il rumore dei due insieme ti fa venire il mal di testa."
+    }
+  ]
+}

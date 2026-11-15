@@ -1,0 +1,149 @@
+{
+  "id": "vacanza-dei-sogni",
+  "title": "La vacanza dei sogni",
+  "shortTitle": "Vacanza",
+  "emoji": "🏝️",
+  "description": "Una settimana di ferie e un budget da sogno. Che vacanza costruisci?",
+  "theme": {
+    "accent": "#00a6b8"
+  },
+  "items": [
+    {
+      "id": "bungalow",
+      "name": "Bungalow sull'acqua",
+      "description": "Terrazza sulla laguna e pesci sotto il pavimento di vetro.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/MaldivesBungalows.jpg?width=400",
+      "emoji": "🏝️",
+      "score": 9
+    },
+    {
+      "id": "volo-diretto",
+      "name": "Volo diretto",
+      "description": "Niente scali, niente valigie perse, e arrivi prima che il sole tramonti.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Airplane_Taking-off_at_CDG.jpg?width=400",
+      "emoji": "✈️",
+      "score": 7
+    },
+    {
+      "id": "snorkeling",
+      "name": "Maschera e boccaglio",
+      "description": "Barriera corallina, tartarughe e una scusa per stare in acqua tutto il giorno.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Older-generation_snorkel_masks.jpg?width=400",
+      "emoji": "🤿",
+      "score": 5
+    },
+    {
+      "id": "sdraio",
+      "name": "Sdraio sotto l'ombrellone",
+      "description": "Sabbia, ombra e un libro. Il classico che non delude mai.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Relaxing_beach_day_with_sun_loungers_and_umbrellas.jpg?width=400",
+      "emoji": "🏖️",
+      "score": 4
+    },
+    {
+      "id": "amaca",
+      "name": "Amaca tra le palme",
+      "description": "Dondolarsi con il rumore delle onde. Bellissima, finché non scivoli giù.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hammock_on_beach.jpg?width=400",
+      "emoji": "🌴",
+      "score": 3
+    },
+    {
+      "id": "cocktail",
+      "name": "Cocktail con l'ombrellino",
+      "description": "Colorato, freddo e con una fettina d'ananas. Ti fa sentire già in vacanza.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Cocktails_mit_Schirmchen.jpg?width=400",
+      "emoji": "🍹",
+      "score": 3
+    },
+    {
+      "id": "crema-solare",
+      "name": "Crema solare SPF 50",
+      "description": "Non fa notizia, ma una scottatura ti rovina tre giorni su sette.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/LRP_sunscreen_bottle.jpg?width=400",
+      "emoji": "🧴",
+      "score": 2
+    },
+    {
+      "id": "selfie-stick",
+      "name": "Selfie stick",
+      "description": "Foto di gruppo senza dover chiedere a uno sconosciuto. Il resto del mondo ti guarda male.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Completely_expanded_Selfie_Stick.jpg?width=400",
+      "emoji": "🤳",
+      "score": 1
+    },
+    {
+      "id": "laptop-lavoro",
+      "name": "Portatile con le mail di lavoro",
+      "description": "\"Controllo solo un attimo.\" Spoiler: non sarà un attimo.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Laptop_computer.jpeg?width=400",
+      "emoji": "💻",
+      "score": -6
+    },
+    {
+      "id": "medusa",
+      "name": "Medusa",
+      "description": "Un regalo della laguna. Trasparente, urticante e proprio nel punto in cui volevi nuotare.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Moon_jellyfish_at_Gota_Sagher.JPG?width=400",
+      "emoji": "🪼",
+      "score": -5
+    }
+  ],
+  "combos": [
+    {
+      "items": [
+        "volo-diretto",
+        "bungalow",
+        "cocktail"
+      ],
+      "score": 8,
+      "label": "Arrivo da sogno",
+      "description": "Atterri senza scali, fai il check-in nel bungalow e ti accoglie un cocktail: la vacanza è già cominciata."
+    },
+    {
+      "items": [
+        "snorkeling",
+        "crema-solare"
+      ],
+      "score": 4,
+      "label": "Ore in acqua",
+      "description": "Passi ore a pancia in giù sul reef: senza crema alla sera la schiena sembra un gambero."
+    },
+    {
+      "items": [
+        "sdraio",
+        "amaca"
+      ],
+      "score": -4,
+      "label": "Doppione da relax",
+      "description": "Ne userai una sola: l'altra resta vuota e ti ricorda che hai speso soldi inutilmente."
+    },
+    {
+      "items": [
+        "snorkeling",
+        "medusa"
+      ],
+      "score": -5,
+      "label": "Che bruciore",
+      "description": "Stai a testa in giù nell'acqua e non vedi la medusa finché non è troppo tardi."
+    },
+    {
+      "items": [
+        "laptop-lavoro",
+        "bungalow"
+      ],
+      "score": -5,
+      "label": "Wi-Fi in laguna",
+      "description": "Il bungalow ha il Wi-Fi veloce, quindi il capo ti trova subito: la terrazza diventa un ufficio."
+    },
+    {
+      "items": [
+        "snorkeling",
+        "selfie-stick"
+      ],
+      "score": 3,
+      "label": "Foto sott'acqua",
+      "description": "Con il selfie stick fai video alle tartarughe senza doverti avvicinare troppo."
+    }
+  ]
+}
