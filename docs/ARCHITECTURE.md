@@ -36,7 +36,8 @@ js/
     rng.js
   ui/
     components.js          # el(), createButton(), createItemImage(), createItemCard(), createThumb(), createPlayerPanel(),
-                           # describeOffer(), createOfferSlider(), createModal(), createScoreBadge(), createScoreRow(), createAuctionLayout()
+                           # describeOffer(), createOfferSlider(), createModal(), createScoreBadge(), createScoreRow(), createAuctionLayout(),
+                           # form: createField(), createTextField(), createStepper(), createToggle(), createSegmented(), createRangeField()
     home.js  settings.js  intro.js  auction.js  judge.js  roundResult.js  final.js
   fx/
     transitions.js  confetti.js  countUp.js  animations.js
@@ -186,9 +187,11 @@ Flusso UI: `startRound` → (`currentAuction` → `offer`/`accept` sulla copia l
 
 ## 5. Stato dell'app, router e schermate
 
-- `store.js` contiene `{ settings, scenarioIndex, game, ui: { screen, params } }`. Espone `get()`, `update(fn)` e `subscribe(fn)`.
-- `router.showScreen(name, params)` smonta la schermata attuale, monta la nuova in `#app` ed emette `screen:change`.
-- Ogni schermata in `ui/` esporta `{ mount(root, params, ctx), unmount() }`, dove `ctx = { store, router, events }`.
+- `store.js` contiene `{ settings, scenarioIndex, scenarioIndexError, game, ui: { screen, params } }`. Espone `get()`, `update(fn)` (`fn(state)` restituisce il NUOVO stato, es. `(s) => ({ ...s, game })`; se restituisce lo stesso oggetto o niente, non notifica), `set(patch)` (merge superficiale) e `subscribe(fn)` → unsubscribe (`fn(nuovo, vecchio)`).
+- `router.configure(container, screenMap)` (chiamato da `main.js`) e `router.showScreen(name, params = {})`: smonta la schermata attuale, svuota `#app`, monta la nuova ed emette `screen:change`. Aggiorna anche `store.ui`. Una schermata senza `mount` (segnaposto) o che lancia durante il mount mostra un messaggio con "Torna alla home". `router.currentScreen()` restituisce il nome corrente.
+- Ogni schermata in `ui/` esporta `{ mount(root, params, ctx), unmount() }` (named export), dove `ctx = { store, router, events }`. `ctx.router` ha `showScreen` e `currentScreen`.
+- `main.js` carica impostazioni e indice scenari, poi mostra `home`. Se `index.json` non si carica, `store.scenarioIndex = []` e `scenarioIndexError` contiene il messaggio.
+- `scenarios.js`: `loadIndex()` → `[{ id, file, title, emoji }]`, `loadScenario(id)` → scenario completo; entrambe con cache e percorsi relativi.
 - Nomi delle schermate: `home`, `settings`, `intro`, `auction`, `judge`, `roundResult`, `final`.
 - Nessun routing via URL per la partita (un reload riporta alla home). Opzionale: salvare `game` in `sessionStorage`.
 
@@ -209,13 +212,13 @@ on(name, handler) → unsubscribe;  emit(name, payload)
 | `judge:reveal` | `{ side, itemId }` | ui/judge |
 | `round:end` | `{ roundIndex, winner, scores? }` | ui/roundResult |
 | `game:end` | `{ winner, summary }` | ui/final |
-| `ui:click` | `{ kind }` | ui/components (pulsanti), **emesso da T6**: T4 non importa `events.js`, i pulsanti accettano solo una callback `onClick` |
+| `ui:click` | `{ kind }` | ui/components: `createButton` lo emette a ogni click (`kind` = `primary`/`secondary`/`p1`/`p2`), prima di `onClick` |
 
 Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli in try/catch dentro `events.js`.
 
 ## 7. Impostazioni
 
-`settings.js`: `DEFAULTS`, `load()` (merge con i default, valori non validi → default), `save(settings)`, `validate(settings, scenarioCount) → { ok, errors }`. Chiave `localStorage`: `byb.settings.v1`. Elenco dei campi: GAME_DESIGN §7. Accesso a `localStorage` sempre in try/catch.
+`settings.js`: `DEFAULTS`, `LIMITS`, `merge(saved)`, `load(store?)` (merge campo per campo con i default, valori non validi → default), `save(settings, store?) → boolean`, `validate(settings, scenarioCount, knownIds?) → { ok, errors }` (`errors = { campo: "messaggio in italiano" }`; `scenarioCount` = scenari nell'indice, `knownIds` opzionale per rifiutare id inesistenti), `selectedCount(settings, scenarioCount)`, `effectiveScenarioIds(settings, knownIds)` (id da passare a `createGame`). Chiave `localStorage`: `byb.settings.v1`. Elenco dei campi: GAME_DESIGN §7. Accesso a `localStorage` sempre in try/catch.
 
 ## 8. CSS
 
@@ -227,7 +230,7 @@ Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli i
 
 ## 9. Immagini
 
-- `<img loading="lazy" referrerpolicy="no-referrer">` con l'URL di Wikimedia; su `onerror` si sostituisce con un `<span class="item-emoji">`.
+- `createItemImage` restituisce un wrapper `.item-media` con l'emoji (`.item-emoji`) sempre sotto e l'`<img loading="lazy" referrerpolicy="no-referrer">` sopra, invisibile finché non è caricata; su `error` l'`<img>` viene rimossa. Così l'emoji si vede anche mentre la richiesta è in corso o resta appesa (nessun evento `error`).
 - Si precaricano le immagini del round all'inizio dell'intro.
 
 ## 10. Test e qualità
@@ -245,8 +248,8 @@ Gli handler di fx/audio non devono mai lanciare errori verso la UI: avvolgerli i
 | T2 | `js/engine/scoring.js`, `game.js`, `rng.js`, relativi test |
 | T3 | `tools/validate-scenarios.mjs`, `scenarios/*`, `tests/scenarios.test.mjs` |
 | T4 | `index.html`, `css/tokens.css`, `base.css`, `components.css`, `js/ui/components.js`, `dev/` |
-| T5 | `js/main.js`, `router.js`, `store.js`, `settings.js`, `scenarios.js`, `ui/home.js`, `ui/settings.js`, `tests/settings.test.mjs` |
-| T6 | `js/events.js`, `ui/intro.js`, `ui/auction.js`, `ui/judge.js`, `ui/roundResult.js`, `css/screens.css` |
+| T5 | `js/main.js`, `router.js`, `store.js`, `settings.js`, `scenarios.js`, `events.js` (spostato da T6), `ui/home.js`, `ui/settings.js`, `tests/settings.test.mjs`, in `css/screens.css` le sezioni home/impostazioni/generiche, in `ui/components.js` e `css/components.css` i controlli del form |
+| T6 | `ui/intro.js`, `ui/auction.js`, `ui/judge.js`, `ui/roundResult.js`, `css/screens.css` (aggiunge le sue sezioni sotto quelle di T5) |
 | T7 | `ui/final.js` |
 | T8 | `js/fx/*`, ritocchi a tutti i CSS e a `ui/*` (solo presentazione) |
 | T9 | `js/audio/*`, `assets/audio/*`, `css/audio.css`, `CREDITS.md`, campi audio in `ui/settings.js` |

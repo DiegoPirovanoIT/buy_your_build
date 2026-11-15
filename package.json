@@ -9,6 +9,15 @@
     "validate": "node tools/validate-scenarios.mjs",
     "serve": "node tools/serve.mjs"
   },
-  "engines": { "node": ">=20" },
-  "license": "ISC"
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "ISC",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": ""
 }
