@@ -1,15 +1,14 @@
 {
   "name": "buy_your_build",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "Two-player auction game: buy your build.",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test",
+    "validate": "node tools/validate-scenarios.mjs",
+    "serve": "node tools/serve.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "wrangler": "^4.162.0"
-  }
+  "engines": { "node": ">=20" },
+  "license": "ISC"
 }
