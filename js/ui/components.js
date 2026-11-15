@@ -428,3 +428,122 @@ export function createRangeField({ label, min = 0, max = 100, value = 0, hint, f
   root.setValue = (v) => { input.value = String(v); out.textContent = format(v); };
   return root;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Game-flow helpers (T6/T7): shared by intro, auction, judge, round result and final screens.
+// ---------------------------------------------------------------------------------------------
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function luminance(color) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function hslToHex(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * c).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+/** Accent of a scenario: `theme.accent` if valid, otherwise a color derived from the id. */
+export function scenarioAccent(scenario) {
+  const accent = scenario?.theme?.accent;
+  if (typeof accent === 'string' && HEX_COLOR.test(accent)) return accent;
+  let h = 0;
+  for (const ch of String(scenario?.id ?? '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return hslToHex(h % 360, 0.75, 0.68);
+}
+
+/** Sets --accent / --on-accent (readable text color) on a container (usually #app). */
+export function applyScenarioTheme(container, scenario) {
+  const accent = scenarioAccent(scenario);
+  container.style.setProperty('--accent', accent);
+  container.style.setProperty('--on-accent', luminance(accent) > 0.35 ? '#12081f' : '#ffffff');
+}
+
+/** Player names of a game: { p1, p2 }. */
+export function playerNames(game) {
+  return { p1: game.settings.player1Name, p2: game.settings.player2Name };
+}
+
+/** Confirmation dialog (mounted on <body>). onConfirm runs after the dialog is closed. */
+export function createConfirm({ title, message, confirmLabel = 'Conferma', cancelLabel = 'Annulla', danger = false, onConfirm }) {
+  let modal;
+  const cancel = createButton(cancelLabel, { kind: 'secondary', onClick: () => modal.close() });
+  const ok = createButton(confirmLabel, { kind: danger ? 'p1' : 'primary', onClick: () => { modal.close(); if (onConfirm) onConfirm(); } });
+  modal = createModal({
+    title,
+    content: el('div', { class: 'confirm' }, el('p', {}, message), el('div', { class: 'confirm__actions' }, cancel, ok)),
+    mount: true,
+  });
+  cancel.focus();
+  return modal;
+}
+
+/**
+ * Small button that asks for confirmation, then abandons the game and goes home.
+ * ctx = { store, router }.
+ */
+export function createLeaveButton(ctx, { label = 'Esci' } = {}) {
+  const btn = createButton(`✕ ${label}`, {
+    kind: 'secondary',
+    ariaLabel: 'Abbandona la partita',
+    onClick: () => createConfirm({
+      title: 'Abbandonare la partita?',
+      message: 'La partita in corso andrà persa e tornerai alla home.',
+      confirmLabel: 'Abbandona',
+      cancelLabel: 'Continua a giocare',
+      danger: true,
+      onConfirm: () => {
+        ctx.store.update((s) => ({ ...s, game: null }));
+        ctx.router.showScreen('home');
+      },
+    }),
+  });
+  btn.classList.add('btn--small');
+  return btn;
+}
+
+/** Top bar of the game screens: leave button, scenario name, small status text (setMeta(text)). */
+export function createGameBar(ctx, { title, meta }) {
+  const metaEl = el('span', { class: 'game-bar__meta' }, meta || '');
+  const root = el('header', { class: 'game-bar' },
+    createLeaveButton(ctx),
+    el('span', { class: 'game-bar__title' }, title),
+    metaEl);
+  root.setMeta = (text) => { metaEl.textContent = text; };
+  return root;
+}
+
+/**
+ * Detailed breakdown of one round, both players. breakdown = result of compareBuilds (scoreBuild per player).
+ * scenario is used to show the names of the items involved in each combo.
+ */
+export function createRoundBreakdown(scenario, breakdown, names) {
+  const nameOf = (id) => scenario.items.find((i) => i.id === id)?.name ?? id;
+  const column = (id) => {
+    const b = breakdown[id];
+    const rows = b.items.map((it) => createScoreRow(it));
+    const combos = b.combos.map((c) => {
+      const row = createScoreRow(c, { combo: true });
+      const involved = el('span', { class: 'score-row__items' }, c.items.map(nameOf).join(' + '));
+      const desc = row.querySelector('.score-row__desc');
+      if (desc) row.insertBefore(involved, desc); else row.append(involved);
+      return row;
+    });
+    return el('section', { class: `breakdown__player breakdown__player--${id}` },
+      el('h4', { class: 'breakdown__name' }, names[id]),
+      el('p', { class: 'breakdown__sub' }, 'Oggetti'),
+      rows.length ? rows : el('p', { class: 'muted' }, 'Nessun oggetto'),
+      el('p', { class: 'breakdown__sub' }, 'Combo attivate'),
+      combos.length ? combos : el('p', { class: 'muted' }, 'Nessuna combo'),
+      el('div', { class: 'breakdown__total' }, el('span', {}, 'Totale'), createScoreBadge(b.total)));
+  };
+  return el('div', { class: 'breakdown' }, column('p1'), column('p2'));
+}
