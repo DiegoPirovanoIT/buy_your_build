@@ -1,1 +1,22 @@
-{ "scenarios": [] }
+{
+  "scenarios": [
+    {
+      "id": "bunker-nucleare",
+      "file": "bunker-nucleare.json",
+      "title": "Costruisci il tuo bunker nucleare",
+      "emoji": "☢️"
+    },
+    {
+      "id": "pizza-perfetta",
+      "file": "pizza-perfetta.json",
+      "title": "La pizza perfetta",
+      "emoji": "🍕"
+    },
+    {
+      "id": "vacanza-dei-sogni",
+      "file": "vacanza-dei-sogni.json",
+      "title": "La vacanza dei sogni",
+      "emoji": "🏝️"
+    }
+  ]
+}

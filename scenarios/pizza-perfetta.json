@@ -1,0 +1,159 @@
+{
+  "id": "pizza-perfetta",
+  "title": "La pizza perfetta",
+  "shortTitle": "Pizza",
+  "emoji": "🍕",
+  "description": "Due pizzaioli, una sola cucina. Chi mette insieme la pizza migliore?",
+  "theme": {
+    "accent": "#d62828"
+  },
+  "items": [
+    {
+      "id": "mozzarella",
+      "name": "Mozzarella di bufala",
+      "description": "Morbida, lattiginosa, fila al punto giusto. Il cuore della pizza.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Mozzarella_di_Bufala_Campana_(2010)_-_by_RaBoe.jpg?width=400",
+      "emoji": "🧀",
+      "score": 8
+    },
+    {
+      "id": "pomodoro",
+      "name": "Pomodori San Marzano",
+      "description": "Dolci e poco acidi: il sugo ideale, senza bisogno di zucchero.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/San_Marzano_Tomatoes.jpg?width=400",
+      "emoji": "🍅",
+      "score": 8
+    },
+    {
+      "id": "farina",
+      "name": "Farina 00 per pizza",
+      "description": "Senza un buon impasto, tutto il resto è solo condimento su un cracker.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Sack_of_King_Arthur_all_purpose_flour_(cropped).jpg?width=400",
+      "emoji": "🌾",
+      "score": 6
+    },
+    {
+      "id": "forno-legna",
+      "name": "Forno a legna",
+      "description": "Mezzo minuto a 450 gradi: cornicione gonfio e leopardato.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Wood_fire_brick_oven_for_baking_pizza.jpg?width=400",
+      "emoji": "🔥",
+      "score": 6
+    },
+    {
+      "id": "salame-piccante",
+      "name": "Salame piccante",
+      "description": "Rotondo, rosso e un po' unto. Piace a tutti, tranne a chi è schizzinoso.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Salami_pepperoni_ZIMBO.jpg?width=400",
+      "emoji": "🌶️",
+      "score": 4
+    },
+    {
+      "id": "basilico",
+      "name": "Basilico fresco",
+      "description": "Poche foglie dopo la cottura: profumo e un po' di colore.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Basil_leaves.jpg?width=400",
+      "emoji": "🌿",
+      "score": 3
+    },
+    {
+      "id": "olio-evo",
+      "name": "Olio extravergine d'oliva",
+      "description": "Un filo a crudo. Non fa la pizza, ma la rende più buona.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Bottle_of_Extra_Virgin_Olive_Oil.jpg?width=400",
+      "emoji": "🫒",
+      "score": 3
+    },
+    {
+      "id": "acciughe",
+      "name": "Acciughe",
+      "description": "Salate e polarizzanti: o le ami o ti rovinano il pranzo.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Anchovy_closeup.jpg?width=400",
+      "emoji": "🐟",
+      "score": 2
+    },
+    {
+      "id": "ananas",
+      "name": "Ananas",
+      "description": "Il frutto che divide l'Italia. Dolce, succoso e per molti un crimine.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Pineapple_Fruit.jpg?width=400",
+      "emoji": "🍍",
+      "score": -4
+    },
+    {
+      "id": "ketchup",
+      "name": "Ketchup",
+      "description": "Il sugo? No, grazie: questo è dolce, denso e rosso solo di nome.",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Czech_ketchup_bottle.jpg?width=400",
+      "emoji": "🍅",
+      "score": -7
+    }
+  ],
+  "combos": [
+    {
+      "items": [
+        "mozzarella",
+        "pomodoro",
+        "basilico"
+      ],
+      "score": 9,
+      "label": "La Margherita",
+      "description": "Pomodoro, mozzarella e basilico sono i colori della bandiera e la ricetta più amata del mondo."
+    },
+    {
+      "items": [
+        "farina",
+        "forno-legna"
+      ],
+      "score": 5,
+      "label": "Cornicione da applausi",
+      "description": "Un impasto di qualità nel forno a legna si gonfia, caramella e prende le tipiche bolle bruciacchiate."
+    },
+    {
+      "items": [
+        "ananas",
+        "salame-piccante"
+      ],
+      "score": 4,
+      "label": "Dolce e piccante",
+      "description": "Il dolce dell'ananas smorza il piccante del salame: il contrasto funziona, anche se nessuno lo ammette."
+    },
+    {
+      "items": [
+        "ananas",
+        "acciughe"
+      ],
+      "score": -6,
+      "label": "Guerra totale",
+      "description": "Frutta tropicale e pesce salato nello stesso morso: il tuo ospite chiamerà un avvocato."
+    },
+    {
+      "items": [
+        "ketchup",
+        "pomodoro"
+      ],
+      "score": -4,
+      "label": "Sugo doppio",
+      "description": "Il ketchup copre il sapore dei San Marzano e rende il sugo dolciastro: hai pagato due volte per rovinarla."
+    },
+    {
+      "items": [
+        "salame-piccante",
+        "acciughe"
+      ],
+      "score": -3,
+      "label": "Troppo sale",
+      "description": "Due ingredienti già salati e saporiti: la pizza diventa una sfida di resistenza per le papille."
+    },
+    {
+      "items": [
+        "olio-evo",
+        "mozzarella",
+        "forno-legna"
+      ],
+      "score": 5,
+      "label": "Il finale perfetto",
+      "description": "Un filo d'olio sulla mozzarella appena uscita dal forno profuma tutta la pizza."
+    }
+  ]
+}
