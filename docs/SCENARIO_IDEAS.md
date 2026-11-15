@@ -5,9 +5,9 @@
 
 | # | id | Titolo | Stato | Task |
 |---|---|---|---|---|
-| 1 | bunker-nucleare | Costruisci il tuo bunker nucleare ☢️ | 🟡 | T3 |
-| 2 | pizza-perfetta | La pizza perfetta 🍕 | 🟡 | T3 |
-| 3 | vacanza-dei-sogni | La vacanza dei sogni 🏝️ | 🟡 | T3 |
+| 1 | bunker-nucleare | Costruisci il tuo bunker nucleare ☢️ | ✅ | T3b |
+| 2 | pizza-perfetta | La pizza perfetta 🍕 | ✅ | T3b |
+| 3 | vacanza-dei-sogni | La vacanza dei sogni 🏝️ | ✅ | T3b |
 | 4 | auto-di-lusso | La tua auto di lusso 🏎️ | ⬜ | |
 | 5 | isola-deserta | Sopravvivi su un'isola deserta 🏝️ | ⬜ | |
 | 6 | apocalisse-zombie | Kit per l'apocalisse zombie 🧟 | ⬜ | |

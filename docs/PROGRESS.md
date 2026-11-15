@@ -11,7 +11,7 @@
 | T1 | Motore d'asta | ✅  | task/T1-T2-engine | unito a main |
 | T2 | Punteggio + orchestrazione partita | ✅  | task/T1-T2-engine | unito a main |
 | T3a | Validatore degli scenari | ✅  | task/T3a-validator | unito a main |
-| T3b | 3 scenari (Bunker, Pizza, Vacanza) | 🟡 | | dipende da T3a |
+| T3b | 3 scenari (Bunker, Pizza, Vacanza) | ✅ | task/T3b-scenarios | dipende da T3a |
 | T4 | Design system + componenti | ✅  | task/T4-design-system | unito a main |
 | T5 | Router, Home, Impostazioni | ⬜ | | dipende da T1–T4 |
 | T6 | Flusso del round (intro, asta, giudice, risultato) | ⬜ | | dipende da T1–T4 |
@@ -21,7 +21,7 @@
 | T10 | QA e rilascio | ⬜ | | dipende da T8, T9 |
 | T11+ | Pacchetti di scenari fino a 50 | ⬜ | | dopo T3 |
 
-Scenari pubblicati: **0 / 50**
+Scenari pubblicati: **3 / 50**
 
 ## Diario delle sessioni
 
